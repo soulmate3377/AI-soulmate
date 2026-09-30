@@ -1,10 +1,18 @@
 # Soulmate
 
-一个住在你电脑里的虚拟恋人。不是"你问它答"的聊天机器人，而是具备三样关键能力：
+**A virtual companion who lives on your computer — with long-term memory and the initiative to message you first.**
+**一个住在你电脑里的虚拟恋人 —— 有长期记忆，也会主动找你。**
 
-- **长期记忆**：她记得你说过的话、你的喜好、你们之间的约定。每次对话前自动检索相关记忆注入上下文，对话后自动归档新内容——每一次对话都建立在过去之上。
-- **主动发消息**：她会在合适的时间主动找你。背后不是定时器，是一个一千多行的"守门人"——判断时机、避免打扰、做意象去重、记得自己主动说过什么，下次你回话时她自然找补。
-- **有分寸的心情**：她今天可能想聊，也可能不太想；敷衍一句她也不算数。一个不会说"今天不太想聊"的不是人，是服务。
+[中文](#soulmate) · [English quick start](#english-quick-start)
+
+她不是"你问它答"的聊天机器人，而是具备三样关键能力：
+
+- **长期记忆 / Long-term memory**：她记得你说过的话、你的喜好、你们之间的约定。每次对话前自动检索相关记忆注入上下文，对话后自动归档新内容——每一次对话都建立在过去之上。
+  She remembers what you said, what you like, what you two agreed on. Relevant memories are retrieved into context before each turn, new ones archived after — every conversation builds on the last.
+- **主动发消息 / Proactive messaging**：她会在合适的时间主动找你。背后不是定时器，是一个一千多行的"守门人"——判断时机、避免打扰、做意象去重、记得自己主动说过什么，下次你回话时她自然找补。
+  She reaches out at the right moment. Behind it is not a timer but a thousand-line gatekeeper: timing, avoiding interruption, imagery de-duplication, tracking what she already said so she can pick the thread back up.
+- **有分寸的心情 / Mood with boundaries**：她今天可能想聊，也可能不太想；敷衍一句她也不算数。一个不会说"今天不太想聊"的不是人，是服务。
+  Some days she wants to talk, some days she doesn't, and a half-hearted reply doesn't count. Something that can never say "not today" isn't a person, it's a service.
 
 她有两个入口，共用同一个大脑、同一份记忆：
 
@@ -19,15 +27,22 @@
 
 欢迎 fork、提 issue、交 PR，一起把它变得更好。
 
-## 核心特性
+## 核心特性 Features
 
 - **记忆系统**：本地 faiss 向量检索 + 摘要管线，宽进严出——闲聊不丢，噪声不进；关系、人格状态随对话演进
+  **Memory**: local faiss vector search plus a summarisation pipeline. Wide intake, strict output — small talk is kept, noise is not. Relationship and personality state evolve with the conversation.
 - **主动消息守门人**：沉默时长、话题余额、意象去重、话茬跟踪，每天有上限，凭什么开口要过审
+  **Proactive gatekeeper**: silence length, topic budget, imagery de-duplication, follow-up tracking, a daily cap — she has to justify speaking up.
 - **真实感细节**：流式输出、微信式分条气泡、"打了一半删掉重打"、按小时稳定的日常安排
+  **Texture**: streaming output, WeChat-style message splitting, "typed half of it, deleted it, typed again", an hourly-stable daily schedule.
 - **多服务商**：任何 OpenAI 兼容接口（DeepSeek / Kimi / 智谱 / 千问 / OpenRouter / 本地 Ollama）；理解、回看、说话三个角色可分别指定模型；瞬时错误自动重试
+  **Any provider**: anything OpenAI-compatible (DeepSeek / Kimi / Zhipu / Qwen / OpenRouter / local Ollama). Separate models for understanding, reflection and speaking; transient errors retry automatically.
 - **人设外置**：`config/persona.yaml` 定义名字、性格、事实档案，不用读代码就能捏人
+  **Persona as config**: `config/persona.yaml` holds her name, character and fact file — no code reading required.
 - **中英双语**：首次启动选语言，设置里切换即时生效
+  **Bilingual UI**: pick a language on first launch, switch it live in settings.
 - **数据安全**：JSON 原子写入、每日自动备份（保留 7 份）、API Key 用 Windows DPAPI 加密
+  **Data safety**: atomic JSON writes, daily backups (7 kept), API keys encrypted with Windows DPAPI.
 
 ## 快速开始
 
@@ -76,6 +91,35 @@ python web_server.py     # 或双击 run_web.bat
 
 Embedding 模型（BAAI/bge-small-zh-v1.5，93MB）首次使用记忆功能时自动下载。
 
+## English quick start
+
+Requires **Python 3.12+** and **Windows** (DPAPI encryption and autostart are Windows-only; macOS/Linux untested).
+The UI ships in Chinese and English; you pick a language on first launch.
+
+```bash
+git clone https://github.com/soulmate3377/AI-soulmate.git
+cd AI-soulmate
+pip install -r requirements.txt
+```
+
+Then configure a model, either way:
+
+- **Use the wizard** (recommended): launch the desktop build. You get a language picker → setup wizard (pick a provider, paste an API key, name her) → main window.
+- **Use an env var**: set `ECHO_API_KEY` and skip the GUI entirely — the terminal build works straight away.
+
+```bash
+python main.py                       # desktop GUI  (or double-click run_gui.bat)
+python companion.py                  # terminal CLI (or double-click run_cli.bat)
+python companion.py "hey"            # one-shot: say one thing, get one reply, exit
+python companion.py --apply-persona  # apply edits to config/persona.yaml
+python web_server.py                 # optional web UI for your phone (run_web.bat)
+```
+
+Only one entry point may run at a time — they share one data directory, and two at once would overwrite each other's chat log.
+
+Configuration (provider, API key, models, persona) lives in the in-app settings page; `config/persona.yaml` is plain YAML and is applied with `--apply-persona`.
+Deeper documentation below is in Chinese — the code comments are bilingual.
+
 ## 模型与配置
 
 - **服务商**：设置页内置 DeepSeek / Kimi / 智谱 / 千问 / OpenRouter 预设，或手填任意 OpenAI 兼容地址
@@ -115,23 +159,32 @@ config/persona.yaml     人设配置
 
 **两个入口是同一个大脑**：GUI 和 CLI 都构造 `core/brain.py` 的 `Brain`，记忆、人格、主动消息、运行锁全部共用，所以你在终端里说的话，窗口里她也记得。
 
-## 数据与隐私
+**One brain, two entry points**: both the GUI and the CLI construct the same `Brain` from `core/brain.py` and share memory, personality, proactive messaging and the run lock — say something in the terminal and the window remembers it too.
+
+## 数据与隐私 Privacy
 
 - 所有对话和记忆只存在你自己的电脑上：程序旁的 `SoulmateData/`，没有就是 `%APPDATA%/Soulmate/`。**备份这个目录 = 备份她**
+  Everything stays on your machine, in `SoulmateData/` next to the app or `%APPDATA%/Soulmate/`. **Backing up that folder is backing her up.**
 - API Key 用 Windows DPAPI 按当前用户加密，拷到别的机器解不开
+  API keys are encrypted with Windows DPAPI for the current user; copying them to another machine will not decrypt.
 - 主动联网的只有你配置的模型服务商和天气查询
+  The only outbound traffic is your model provider and the weather lookup.
 - 仓库本身不含任何用户数据（`.gitignore` 已排除）
+  The repository contains no user data (`.gitignore` excludes it).
 
 ## Roadmap
 
-- [ ] 语音：TTS / ASR 接入
+- [ ] 语音：TTS / ASR 接入 / Voice: TTS + ASR
 - [ ] Telegram / 微信机器人接入（`companion.py` 的 Brain 就是现成的接口层）
-- [ ] 可插拔记忆后端（SQLite / MemOS / Zep）
-- [ ] macOS / Linux 支持
+      Telegram / WeChat bot (the `Brain` in `companion.py` is already the interface layer)
+- [ ] 可插拔记忆后端（SQLite / MemOS / Zep）/ Pluggable memory backends
+- [ ] macOS / Linux 支持 / macOS + Linux support
 
-## 贡献
+## 贡献 Contributing
 
 Issue 和 PR 都欢迎。改代码前先跑一遍现有流程（**桌面版 + `companion.py` 两个入口都过一遍**），界面文案记得过 `ui/i18n.py` 的双语表。
+
+Issues and PRs are welcome. Before changing code, run both entry points (**desktop + `companion.py`**), and route any new UI string through the bilingual table in `ui/i18n.py`.
 
 ## License
 
