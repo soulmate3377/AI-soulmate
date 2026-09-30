@@ -133,6 +133,32 @@ _DEFAULT = {
     ],
 }
 
+# 英文界面用的通用日程池：
+# 不分职业（状态栏一句话而已），
+# 但同样按时段稳定轮换
+
+_EN_SCHEDULES = {
+    "morning": [
+        "In class",
+        "Studying at the library",
+        "Rushing yesterday's homework",
+    ],
+    "afternoon": [
+        "In class",
+        "Studying at the library",
+        "Taking a slow walk",
+    ],
+    "evening": [
+        "Finishing homework",
+        "Watching a show",
+        "Deciding what to eat",
+    ],
+    "night": [
+        "Scrolling her phone",
+        "Packing up for bed",
+    ],
+}
+
 
 def _slot(hour):
 
@@ -151,10 +177,53 @@ def _slot(hour):
     return "night"
 
 
+def _ui_language():
+
+    """
+    界面语言。
+    core 层不反向依赖 ui，
+    直接读配置文件。
+    """
+
+    try:
+
+        from core import storage
+
+        return (
+            storage.load_config()
+            .get("language")
+            or "zh"
+        )
+
+    except Exception:
+
+        return "zh"
+
+
 class ActivityEngine:
 
 
     def _pick(self, occupation, moment):
+
+        # 英文界面走通用英文池，
+        # 不查中文职业排期
+
+        if _ui_language() == "en":
+
+            pool = _EN_SCHEDULES[
+                _slot(moment.hour)
+            ]
+
+            seed = (
+                "en-"
+                f"{moment:%Y-%m-%d-%H}-"
+                f"{moment.minute // 30}"
+            )
+
+            return random.Random(
+                seed
+            ).choice(pool)
+
 
         schedule = _SCHEDULES.get(
             occupation, _DEFAULT

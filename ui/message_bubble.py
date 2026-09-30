@@ -20,6 +20,7 @@ from core.identity import Identity
 from core.paths import resolve_asset
 
 from ui.theme import get_theme
+from ui.i18n import tr
 
 
 # ==================================================
@@ -178,7 +179,7 @@ class MessageBubble(QWidget):
 
         if self.sender == "我":
 
-            avatar.setText("我")
+            avatar.setText(tr("我"))
 
             avatar.setStyleSheet(
                 f"""

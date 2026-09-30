@@ -400,7 +400,7 @@ class MainWindow(QMainWindow):
         menu = QMenu()
 
         show_action = menu.addAction(
-            "打开 Echo"
+            tr("打开 Soulmate")
         )
 
         show_action.triggered.connect(
@@ -408,7 +408,7 @@ class MainWindow(QMainWindow):
         )
 
         quit_action = menu.addAction(
-            "退出"
+            tr("退出")
         )
 
         quit_action.triggered.connect(

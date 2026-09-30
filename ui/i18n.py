@@ -165,6 +165,33 @@ EN_MAP = {
     "现居城市": "City",
     "她的身份": "Occupation",
     "配色": "Theme",
+    "我": "Me",
+
+    # ---- 职业选项 ----
+
+    "学生": "Student",
+    "设计师": "Designer",
+    "程序员": "Programmer",
+    "教师": "Teacher",
+    "自由职业": "Freelancer",
+
+    # ---- 托盘 / 记忆窗 ----
+
+    "打开 Soulmate": "Open Soulmate",
+    "退出": "Quit",
+    "她记错了就删掉这条":
+        "Delete if she misremembers",
+    "全部忘掉": "Forget everything",
+    "会把她记住的 %d 条全部删掉，\n她就真的什么都不记得了。\n\n确定吗？":
+        "This erases all %d memories.\n"
+        "She will truly remember nothing.\n\n"
+        "Are you sure?",
+    "语言已保存": "Language saved",
+    "重启 Soulmate 后整个界面"
+    "就会切换成新语言。\n"
+    "现在就重启吗？":
+        "Soulmate will restart with the "
+        "new language.\nRestart now?",
 
     # ---- 主窗口 / 托盘 ----
 

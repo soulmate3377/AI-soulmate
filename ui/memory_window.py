@@ -199,7 +199,7 @@ class MemoryRow(QWidget):
         self.delete_button.setFixedWidth(64)
 
         self.delete_button.setToolTip(
-            "她记错了就删掉这条"
+            tr("她记错了就删掉这条")
         )
 
         self.delete_button.clicked.connect(
@@ -286,7 +286,7 @@ class MemoryWindow(QWidget):
         # 标题
         # --------------------
 
-        title = QLabel("她记得的事")
+        title = QLabel(tr("她记得的事"))
 
         title.setAlignment(
             Qt.AlignCenter
@@ -419,7 +419,7 @@ class MemoryWindow(QWidget):
 
 
         self.clear_button = QPushButton(
-            "全部忘掉"
+            tr("全部忘掉")
         )
 
         self.clear_button.clicked.connect(
@@ -706,12 +706,10 @@ class MemoryWindow(QWidget):
 
             self,
 
-            "全部忘掉",
+            tr("全部忘掉"),
 
-            f"会把她记住的 {count} 条"
-            f"全部删掉，\n"
-            f"她就真的什么都不记得了。\n\n"
-            f"确定吗？",
+            tr("会把她记住的 %d 条全部删掉，\n她就真的什么都不记得了。\n\n确定吗？")
+            % count,
 
             QMessageBox.Yes
             | QMessageBox.No,

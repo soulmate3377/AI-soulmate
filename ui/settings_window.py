@@ -411,7 +411,7 @@ class SettingsWindow(QWidget):
         # =====================
 
         title = QLabel(
-            "Echo 设置"
+            tr("Soulmate 设置")
         )
 
 
@@ -438,6 +438,45 @@ class SettingsWindow(QWidget):
 
         layout.addWidget(
             title
+        )
+
+
+
+        # =====================
+        # 语言
+        # 放最顶上：
+        # 切换后弹窗一键重启生效
+        # =====================
+
+        layout.addWidget(
+            QLabel(tr("语言"))
+        )
+
+        self.lang_combo = QComboBox()
+
+        for code, label in (
+            i18n.LANG_LABELS.items()
+        ):
+
+            self.lang_combo.addItem(
+                label, code
+            )
+
+        self.lang_combo.setCurrentIndex(
+
+            0
+            if i18n.current_language()
+            == i18n.ZH
+            else 1
+
+        )
+
+        self.lang_combo.currentIndexChanged.connect(
+            self._pick_language
+        )
+
+        layout.addWidget(
+            self.lang_combo
         )
 
 
@@ -656,13 +695,15 @@ class SettingsWindow(QWidget):
             True
         )
 
-        self.occupation_combo.addItems([
-            "学生",
-            "设计师",
-            "程序员",
-            "教师",
-            "自由职业",
-        ])
+        self.occupation_combo.addItems(
+            [
+                tr("学生"),
+                tr("设计师"),
+                tr("程序员"),
+                tr("教师"),
+                tr("自由职业"),
+            ]
+        )
 
         saved_occupation = (
             self.identity.get(
@@ -678,56 +719,6 @@ class SettingsWindow(QWidget):
 
         layout.addWidget(
             self.occupation_combo
-        )
-
-
-
-        # =====================
-        # 语言
-        # 保存后对新窗口生效，
-        # 主界面重启才全部换过来
-        # =====================
-
-        layout.addWidget(
-            QLabel(tr("语言"))
-        )
-
-        self.lang_combo = QComboBox()
-
-        for code, label in (
-            i18n.LANG_LABELS.items()
-        ):
-
-            self.lang_combo.addItem(
-                label, code
-            )
-
-        self.lang_combo.setCurrentIndex(
-
-            0
-            if i18n.current_language()
-            == i18n.ZH
-            else 1
-
-        )
-
-        self.lang_combo.currentIndexChanged.connect(
-            self._pick_language
-        )
-
-        layout.addWidget(
-            self.lang_combo
-        )
-
-        self.lang_hint = QLabel("")
-
-        self.lang_hint.setStyleSheet(
-            "font-size:12px;"
-            "font-weight:normal;"
-        )
-
-        layout.addWidget(
-            self.lang_hint
         )
 
 
@@ -1631,7 +1622,9 @@ class SettingsWindow(QWidget):
 
     # =====================
     # 语言切换：
-    # 立即保存，提示重启后全部生效
+    # 保存后问一句要不要
+    # 立刻重启应用，
+    # 重启后整个界面换语言
     # =====================
 
     def _pick_language(self, index):
@@ -1653,10 +1646,63 @@ class SettingsWindow(QWidget):
 
         i18n.set_language(code)
 
-        self.lang_hint.setText(
-            tr("切换语言后重启 Soulmate "
-            "才会全部生效")
+
+        answer = QMessageBox.question(
+
+            self,
+
+            tr("语言已保存"),
+
+            tr("重启 Soulmate 后整个界面"
+            "就会切换成新语言。\n"
+            "现在就重启吗？"),
+
+            QMessageBox.Yes
+            | QMessageBox.No,
+
+            QMessageBox.No,
+
         )
+
+
+        if answer == QMessageBox.Yes:
+
+            self._restart_app()
+
+
+
+    def _restart_app(self):
+
+        """
+        拉起一个新自己，再退出。
+        """
+
+        import os as _os
+
+        from pathlib import Path
+
+        from PySide6.QtCore import (
+            QProcess,
+            QApplication,
+        )
+
+        main_py = (
+
+            Path(__file__)
+            .resolve().parent.parent
+            / "main.py"
+
+        )
+
+
+        QProcess.startDetached(
+            sys.executable,
+            [str(main_py)],
+            str(main_py.parent),
+        )
+
+
+        QApplication.quit()
 
 
 
