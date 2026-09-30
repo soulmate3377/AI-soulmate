@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Soulmate">
+<meta name="theme-color" content="#F1F3EE">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
+<title>Soulmate</title>
+<style>
+:root{
+  --paper:#F1F3EE;
+  --paper-deep:#E8EBE4;
+  --bubble:#FFFFFF;
+  --mine:#93C9A8;
+  --mine-deep:#6FB48C;
+  --mine-text:#1E2B23;
+  --ink:#2B3430;
+  --ink-soft:#6B7570;
+  --line:#DCE0D8;
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  overflow:hidden;
+  overscroll-behavior:none;
+}
+
+/* ---------- 顶栏 ---------- */
+header{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  height:calc(56px + env(safe-area-inset-top));
+  padding:env(safe-area-inset-top) 16px 0;
+  display:flex;align-items:center;gap:10px;
+  background:rgba(241,243,238,.92);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(160deg,#A9CDB9,#7FB296);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:15px;
+  font-family:KaiTi,"STKaiti",serif;
+  flex:none;
+}
+.who{flex:1;min-width:0}
+.who .name{font-size:16px;font-weight:600;letter-spacing:.3px}
+.who .status{
+  font-size:11.5px;color:var(--ink-soft);
+  margin-top:1px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+
+/* ---------- 消息区 ---------- */
+#chat{
+  position:absolute;
+  top:calc(56px + env(safe-area-inset-top));
+  bottom:calc(64px + env(safe-area-inset-bottom));
+  left:0;right:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:14px 12px 18px;
+  scroll-behavior:smooth;
+}
+.day{
+  text-align:center;margin:14px 0 10px;
+  font-size:11px;color:var(--ink-soft);
+}
+.day span{
+  background:var(--paper-deep);
+  padding:3px 10px;border-radius:20px;
+}
+.row{display:flex;margin-bottom:4px;align-items:flex-end}
+.row.mine{justify-content:flex-end}
+.bubble{
+  max-width:76%;
+  padding:9px 12px;
+  font-size:15px;line-height:1.55;
+  word-break:break-word;white-space:pre-wrap;
+  position:relative;
+}
+.echo .bubble{
+  background:var(--bubble);
+  border-radius:var(--radius);
+  border-bottom-left-radius:4px;
+  margin-left:0;
+}
+.echo.tail .bubble{border-bottom-left-radius:var(--radius)}
+.echo .gap{width:34px;flex:none}
+.echo.tail .gap{display:none}
+.row .ava{
+  width:28px;height:28px;border-radius:50%;
+  flex:none;margin:0 6px 2px 0;
+  background:linear-gradient(160deg,#A9CDB9,#7FB296);
+  color:#fff;font-size:12px;
+  font-family:KaiTi,"STKaiti",serif;
+  display:flex;align-items:center;justify-content:center;
+}
+.mine .bubble{
+  background:var(--mine);color:var(--mine-text);
+  border-radius:var(--radius);
+  border-bottom-right-radius:4px;
+}
+.mine.tail .bubble{border-bottom-right-radius:var(--radius)}
+.sys{
+  text-align:center;font-size:11.5px;
+  color:var(--ink-soft);margin:10px 0;
+}
+.typing{display:inline-flex;gap:4px;padding:4px 2px}
+.typing i{
+  width:5px;height:5px;border-radius:50%;
+  background:#B9C4BC;animation:blink 1.2s infinite;
+}
+.typing i:nth-child(2){animation-delay:.2s}
+.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+/* ---------- 输入区 ---------- */
+footer{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(241,243,238,.94);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);
+  display:flex;gap:8px;align-items:flex-end;
+}
+#input{
+  flex:1;
+  background:#fff;border:1px solid var(--line);
+  border-radius:18px;
+  padding:9px 14px;font-size:15.5px;
+  line-height:1.4;max-height:96px;
+  resize:none;outline:none;
+  font-family:inherit;color:var(--ink);
+}
+#input:focus{border-color:var(--mine-deep)}
+#send{
+  flex:none;width:40px;height:40px;
+  border:none;border-radius:50%;
+  background:var(--mine-deep);color:#fff;
+  font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .15s;
+}
+#send:disabled{opacity:.35}
+#send:active{transform:scale(.94)}
+
+/* ---------- 登录 ---------- */
+#login{
+  position:fixed;inset:0;z-index:50;
+  background:var(--paper);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:18px;padding:0 44px;
+}
+#login .avatar{width:64px;height:64px;font-size:26px}
+#login h1{
+  font-size:20px;font-weight:600;
+  font-family:KaiTi,"STKaiti",serif;letter-spacing:2px;
+}
+#login p{font-size:12.5px;color:var(--ink-soft);text-align:center;line-height:1.7}
+#passcode{
+  width:100%;max-width:220px;
+  background:#fff;border:1px solid var(--line);
+  border-radius:12px;padding:12px;
+  font-size:22px;text-align:center;
+  letter-spacing:12px;outline:none;
+}
+#passcode:focus{border-color:var(--mine-deep)}
+#login button{
+  background:var(--mine-deep);color:#fff;
+  border:none;border-radius:12px;
+  padding:11px 46px;font-size:15px;
+}
+#login .err{font-size:12px;color:#C25B4E;height:14px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="login" class="hidden">
+  <div class="avatar">Soulmate</div>
+  <h1>Soulmate</h1>
+  <p>她在你电脑上等你<br>输入密码进来找她</p>
+  <input id="passcode" inputmode="numeric" maxlength="6" placeholder="······">
+  <button onclick="doLogin()">进入</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<header>
+  <div class="avatar">Soulmate</div>
+  <div class="who">
+    <div class="name">Echo</div>
+    <div class="status" id="status">连接中…</div>
+  </div>
+</header>
+
+<div id="chat"></div>
+
+<footer>
+  <textarea id="input" rows="1" placeholder="和她说点什么…"></textarea>
+  <button id="send" onclick="send()">↑</button>
+</footer>
+
+<script>
+/* ================= 配置 ================= */
+const API = location.origin;
+const POLL_MS = 25000;          // 她主动说话的轮询间隔
+const GROUP_WINDOW = 3*60*1000; // 连续消息合并窗口
+
+/* ================= 状态 ================= */
+let token = localStorage.getItem('echo_token') || '';
+let lastSeq = 0;
+let sending = false;
+let lastRole = null, lastTime = 0;
+
+const $ = id => document.getElementById(id);
+const chat = $('chat');
+
+/* ================= 工具 ================= */
+function authHeaders(){
+  return {'X-Echo-Token': token, 'Content-Type':'application/json'};
+}
+async function api(path, opts={}){
+  const r = await fetch(API + path, {...opts, headers:{...authHeaders(), ...(opts.headers||{})}});
+  if(r.status === 401){ localStorage.removeItem('echo_token'); token=''; showLogin(); throw new Error('unauthorized'); }
+  return r;
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtTime(t){
+  const d = new Date(t.replace(/-/g,'/'));
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if(sameDay) return d.toTimeString().slice(0,5);
+  return (d.getMonth()+1)+'-'+d.getDate();
+}
+function scrollBottom(force){
+  const near = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 160;
+  if(near || force) chat.scrollTop = chat.scrollHeight;
+}
+
+/* ================= 消息渲染 ================= */
+function addMessage(role, content, animate){
+  if(role === '系统' || role === 'system'){
+    const d = document.createElement('div');
+    d.className = 'sys'; d.textContent = content;
+    chat.appendChild(d);
+    lastRole = null;
+    return;
+  }
+  const time = fmtTime(arguments[3] || '');
+  const isEcho = (role === 'echo' || role === 'Echo');
+  // 日期分隔
+  const day = (arguments[3] || '').slice(0,10);
+  if(day && day !== addMessage._lastDay){
+    const d = document.createElement('div');
+    d.className = 'day';
+    d.innerHTML = '<span>'+day.replace(/-/g,'/')+'</span>';
+    chat.appendChild(d);
+    addMessage._lastDay = day;
+  }
+  const row = document.createElement('div');
+  row.className = 'row ' + (isEcho ? 'echo tail' : 'mine tail');
+  if(isEcho){
+    const ava = document.createElement('div');
+    ava.className = 'ava'; ava.textContent = 'E';
+    row.appendChild(ava);
+  }
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  b.textContent = content;
+  row.appendChild(b);
+  // 撤掉上一条的 tail（头像换到组尾）
+  if(addMessage._prev && addMessage._prev.dataset.role === role
+     && Date.now() - (addMessage._prevTime || 0) < 0){
+    addMessage._prev.classList.remove('tail');
+  }
+  chat.appendChild(row);
+  addMessage._prev = row;
+  addMessage._prevTime = Date.now();
+  lastRole = role;
+  if(animate){ row.style.opacity = 0; requestAnimationFrame(()=>{ row.style.transition='opacity .18s'; row.style.opacity = 1; }); }
+  scrollBottom(false);
+  return row;
+}
+
+/* ================= 登录 ================= */
+function showLogin(){
+  $('login').classList.remove('hidden');
+  $('passcode').value = '';
+  setTimeout(()=>$('passcode').focus(), 100);
+}
+async function doLogin(){
+  const code = $('passcode').value.trim();
+  if(!code) return;
+  const r = await fetch(API+'/api/login', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({passcode: code})
+  });
+  if(r.status !== 200){ $('loginErr').textContent = '密码不对'; return; }
+  const data = await r.json();
+  token = data.token;
+  localStorage.setItem('echo_token', token);
+  $('login').classList.add('hidden');
+  boot();
+}
+$('passcode').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+/* ================= 历史 / 状态 / 轮询 ================= */
+async function loadHistory(){
+  const r = await api('/api/history?limit=120');
+  const data = await r.json();
+  chat.innerHTML = '';
+  addMessage._lastDay = null;
+  addMessage._prev = null;
+  for(const m of (data.messages||[])){
+    addMessage(m.role, m.content, false, m.time);
+  }
+  scrollBottom(true);
+}
+async function loadStatus(){
+  try{
+    const r = await api('/api/status');
+    const d = await r.json();
+    $('status').textContent = d.status || '在线';
+  }catch(e){ $('status').textContent = '连接不上'; }
+}
+async function pollLoop(){
+  try{
+    const r = await api('/api/poll?seq='+lastSeq);
+    const d = await r.json();
+    for(const m of (d.messages||[])){
+      lastSeq = Math.max(lastSeq, m.seq||0);
+      // 自己刚发出去的消息不在这里重复出现（role=user 不推送）
+      if(m.role === 'echo') addMessage('echo', m.content, true, m.time);
+    }
+  }catch(e){}
+  setTimeout(pollLoop, POLL_MS);
+}
+
+/* ================= 发送 ================= */
+async function send(){
+  const input = $('input');
+  const text = input.value.trim();
+  if(!text || sending) return;
+  sending = true;
+  $('send').disabled = true;
+  input.value = '';
+  input.style.height = 'auto';
+
+  addMessage('user', text, true);
+  lastSeq++; // 占位防串
+
+  // 她正在想……
+  const row = document.createElement('div');
+  row.className = 'row echo tail';
+  row.innerHTML = '<div class="ava">E</div><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';
+  chat.appendChild(row);
+  scrollBottom(true);
+
+  try{
+    const r = await fetch(API+'/api/chat', {
+      method:'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({message: text})
+    });
+    if(r.status !== 200){
+      row.remove();
+      addMessage('系统', '（她没接上：网络或服务出了问题）', false);
+      return;
+    }
+    const bubble = row.querySelector('.bubble');
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    bubble.innerHTML = '';
+    let first = true;
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      bubble.textContent += dec.decode(value, {stream:true});
+      if(first){ row.remove(); first = false; }
+      scrollBottom(false);
+    }
+  }catch(e){
+    row.querySelector('.bubble').textContent += '\n（连接断了，她说到这）';
+  }finally{
+    sending = false;
+    $('send').disabled = false;
+    input.focus();
+  }
+}
+
+/* ================= 输入框自适应 ================= */
+$('input').addEventListener('input', function(){
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 96) + 'px';
+});
+$('input').addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){
+    e.preventDefault(); send();
+  }
+});
+
+/* ================= 启动 ================= */
+async function boot(){
+  try{
+    await loadHistory();
+    await loadStatus();
+    pollLoop();
+    setInterval(loadStatus, 5*60*1000);
+  }catch(e){
+    if(e.message !== 'unauthorized') showLogin();
+  }
+}
+if(token) boot(); else showLogin();
+</script>
+</body>
+</html>

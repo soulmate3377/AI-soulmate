@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# PyInstaller 产物
+build/
+dist/
+
+# 本地 embedding 模型（93MB，
+# download_model.py 可重新下载）
+models/
+
+# 运行时/遗留的用户数据：
+# 聊天记录、记忆、API Key 都在里面，
+# 绝不能进仓库
+SoulmateData/
+database/
+memory/*.json
+memory/vector_store/
+
+# 日志与构建输出
+*.log
+build_*.txt
