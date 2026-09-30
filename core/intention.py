@@ -23,12 +23,12 @@ class IntentionSystem:
 
             return (
                 Identity().get("echo_name")
-                or "EchoLover"
+                or "Soulmate"
             )
 
         except Exception:
 
-            return "EchoLover"
+            return "Soulmate"
 
 
 

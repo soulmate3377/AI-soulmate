@@ -1,12 +1,12 @@
 # web_server.py
 #
-# EchoLover Web 版服务端。
+# Soulmate Web 版服务端。
 #
 # ==================================================
 # 这是什么
 # --------------------------------------------------
 # 手机上没法跑 Windows exe，但可以跑浏览器。
-# 这个文件把 EchoLover 的大脑（Brain：记忆、性格、
+# 这个文件把 Soulmate 的大脑（Brain：记忆、性格、
 # 理解、输出、主动消息）原样暴露成 HTTP 服务，
 # 手机浏览器连进来就是一个聊天界面。
 #
@@ -19,7 +19,7 @@
 # 只用 Python 标准库（http.server / threading /
 # secrets / json）。
 # 这样家里电脑现在就能跑，
-# 以后搬去云服务器也只需要 EchoLover 本来的
+# 以后搬去云服务器也只需要 Soulmate 本来的
 # 那几个依赖（openai / faiss / sentence-transformers），
 # 不用为了一个 Web 框架再装东西。
 #
@@ -294,7 +294,7 @@ def events_after(seq):
 # 一把锁）。
 # =========================
 
-print("正在启动 EchoLover 的大脑……")
+print("正在启动 Soulmate 的大脑……")
 
 from core.brain import Brain
 

@@ -1,7 +1,7 @@
 # core/weather.py
 #
 # 城市天气查询（Open-Meteo，无需 Key）
-# 供 EchoLover 感知"她住的城市的此刻天气"
+# 供 Soulmate 感知"她住的城市的此刻天气"
 # 带内存缓存，默认一小时刷新一次；
 # 网络失败返回 None，绝不影响聊天
 

@@ -1,6 +1,6 @@
 # companion.py
 #
-# EchoLover 的无界面入口。
+# Soulmate 的无界面入口。
 #
 # ==================================================
 # 什么时候用这个
@@ -230,7 +230,7 @@ def chat_loop(brain, cm):
 
     her = (
         Identity().get("echo_name")
-        or "EchoLover"
+        or "Soulmate"
     )
 
     guard = ProactiveGuard()
@@ -420,7 +420,7 @@ def main():
     if not ok:
 
         print(
-            f"另一个 EchoLover（{running}）"
+            f"另一个 Soulmate（{running}）"
             "正在运行，先关掉再开。"
         )
 

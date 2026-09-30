@@ -537,7 +537,7 @@ class Scheduler:
 
         print(
 
-            "EchoLover:",
+            "Soulmate:",
 
             message
 

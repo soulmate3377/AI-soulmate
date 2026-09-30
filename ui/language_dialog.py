@@ -33,7 +33,7 @@ class LanguageDialog(QDialog):
 
 
         self.setWindowTitle(
-            "EchoLover"
+            "Soulmate"
         )
 
         self.setModal(True)
@@ -46,7 +46,7 @@ class LanguageDialog(QDialog):
         layout.setSpacing(16)
 
 
-        title = QLabel("EchoLover")
+        title = QLabel("Soulmate")
 
         title.setAlignment(
             Qt.AlignCenter

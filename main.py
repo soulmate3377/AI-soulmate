@@ -40,9 +40,9 @@ def main():
 
         QMessageBox.critical(
             None,
-            "EchoLover",
+            "Soulmate",
             tr("%s 已经在运行了。\n\n"
-            "EchoLover 同时只能开一个"
+            "Soulmate 同时只能开一个"
             "（同时开会互相覆盖聊天记录）。\n"
             "先把正在用的那个关掉，"
             "再重新打开。") % running,
@@ -96,7 +96,7 @@ def main():
 
 
     # =========================
-    # 创建EchoLover窗口
+    # 创建Soulmate窗口
     # =========================
 
     window = MainWindow()

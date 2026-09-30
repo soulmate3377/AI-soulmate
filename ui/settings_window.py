@@ -140,7 +140,7 @@ def _autostart_lnk():
     ) / (
         "Microsoft/Windows/"
         "Start Menu/Programs/"
-        "Startup/EchoLover.lnk"
+        "Startup/Soulmate.lnk"
     )
 
     return startup
@@ -401,7 +401,7 @@ class SettingsWindow(QWidget):
 
 
         self.setWindowTitle(
-            tr("EchoLover 设置")
+            tr("Soulmate 设置")
         )
 
 
@@ -421,7 +421,7 @@ class SettingsWindow(QWidget):
         # =====================
 
         title = QLabel(
-            tr("EchoLover 设置")
+            tr("Soulmate 设置")
         )
 
 

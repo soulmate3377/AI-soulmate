@@ -1,4 +1,4 @@
-# EchoLover
+# Soulmate
 
 一个住在你电脑里的虚拟恋人。不是"你问它答"的聊天机器人，而是具备三样关键能力：
 
@@ -27,8 +27,8 @@
 需要 Python 3.12+ 和 Windows（DPAPI 加密与自启用到 Windows；macOS/Linux 未测试）。
 
 ```bash
-git clone https://github.com/<你的用户名>/EchoLover.git
-cd EchoLover
+git clone https://github.com/soulmate3377/AI-soulmate.git
+cd AI-soulmate
 pip install -r requirements.txt
 python main.py
 ```
@@ -54,7 +54,7 @@ Embedding 模型（BAAI/bge-small-zh-v1.5，93MB）首次使用记忆功能时�
 
 ## 用 Claude Code 驱动
 
-仓库内置 Skill（`.claude/skills/echo-lover/`）。把这个仓库放进你的 Claude Code 工作区，说"和 EchoLover 聊天"或"帮我改 EchoLover 的人设"，它会调用 `companion.py` 完成操作。Skill 只做入口，所有逻辑都在 Python 里——见 [SKILL.md](.claude/skills/echo-lover/SKILL.md)。
+仓库内置 Skill（`.claude/skills/echo-lover/`）。把这个仓库放进你的 Claude Code 工作区，说"和 Soulmate 聊天"或"帮我改 Soulmate 的人设"，它会调用 `companion.py` 完成操作。Skill 只做入口，所有逻辑都在 Python 里——见 [SKILL.md](.claude/skills/echo-lover/SKILL.md)。
 
 ## 架构一览
 
@@ -81,7 +81,7 @@ config/persona.yaml     人设配置
 
 ## 数据与隐私
 
-- 所有对话和记忆只存在你自己的电脑上：程序旁的 `SoulmateData/`，没有就是 `%APPDATA%/EchoLover/`。**备份这个目录 = 备份她**
+- 所有对话和记忆只存在你自己的电脑上：程序旁的 `SoulmateData/`，没有就是 `%APPDATA%/Soulmate/`。**备份这个目录 = 备份她**
 - API Key 用 Windows DPAPI 按当前用户加密，拷到别的机器解不开
 - 主动联网的只有你配置的模型服务商和天气查询
 - 仓库本身不含任何用户数据（`.gitignore` 已排除）

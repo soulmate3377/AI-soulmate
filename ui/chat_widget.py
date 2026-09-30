@@ -1261,7 +1261,7 @@ class ChatWidget(QWidget):
                     tr("启动时出了点问题：\n%s\n详细日志在 %s")
                     % (
                         error,
-                        "%APPDATA%\\EchoLover\\"
+                        "%APPDATA%\\Soulmate\\"
                         "echo_error.log",
                     )
                 )
@@ -2427,7 +2427,7 @@ class ChatWidget(QWidget):
 
         lines = [
 
-            "# EchoLover 聊天记录",
+            "# Soulmate 聊天记录",
 
             "# 共 %d 条 · 导出于 %s"
             % (

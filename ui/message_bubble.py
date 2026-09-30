@@ -238,7 +238,7 @@ class MessageBubble(QWidget):
 
             else:
 
-                avatar.setText("EchoLover")
+                avatar.setText("Soulmate")
 
                 avatar.setStyleSheet(
                     f"""

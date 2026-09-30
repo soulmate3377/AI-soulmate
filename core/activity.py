@@ -1,6 +1,6 @@
 # core/activity.py
 #
-# EchoLover 自己的日常：
+# Soulmate 自己的日常：
 # 她不是永远等你说话，
 # 她有课要上、有图要画、有班要上。
 #

@@ -1,16 +1,16 @@
 ---
 name: echo-lover
-description: 与 EchoLover——一个有长期记忆、会主动开口的虚拟伴侣——在终端里聊天、修改她的人设、调整主动消息频率。当用户想和 EchoLover 聊天、运行/启动/测试 EchoLover 的对话功能、修改她的人设（名字、性格、事实档案）或调整她主动发消息的行为时使用本技能。不适用于修改图形界面的视觉样式。
+description: 与 Soulmate——一个有长期记忆、会主动开口的虚拟伴侣——在终端里聊天、修改她的人设、调整主动消息频率。当用户想和 Soulmate 聊天、运行/启动/测试 Soulmate 的对话功能、修改她的人设（名字、性格、事实档案）或调整她主动发消息的行为时使用本技能。不适用于修改图形界面的视觉样式。
 ---
 
-# EchoLover
+# Soulmate
 
 基于 LLM API 的虚拟伴侣：有长期记忆（每次对话自动检索历史）、会主动开口（守门人判断时机，避免打扰）。无界面 CLI 与 GUI（main.py）共用同一个大脑和同一份数据。
 
 ## 前置条件
 
 - Python 3.12+，依赖已安装：`pip install -r requirements.txt`
-- 数据目录 `SoulmateData/`（在项目旁或 `%APPDATA%/EchoLover/`）
+- 数据目录 `SoulmateData/`（在项目旁或 `%APPDATA%/Soulmate/`）
 - API Key 已配置：环境变量 `ECHO_API_KEY`，或首次运行后存在于数据目录的 DPAPI 加密配置中
 
 ## 运行命令

@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
         # =========================
 
         self.setWindowTitle(
-            "EchoLover"
+            "Soulmate"
         )
 
 
@@ -374,7 +374,7 @@ class MainWindow(QMainWindow):
             icon, self
         )
 
-        self.tray.setToolTip("EchoLover")
+        self.tray.setToolTip("Soulmate")
 
 
         self._rebuild_tray_menu()
@@ -403,7 +403,7 @@ class MainWindow(QMainWindow):
         menu = QMenu()
 
         show_action = menu.addAction(
-            tr("打开 EchoLover")
+            tr("打开 Soulmate")
         )
 
         show_action.triggered.connect(
@@ -441,7 +441,7 @@ class MainWindow(QMainWindow):
     def _apply_language(self):
 
         self.setWindowTitle(
-            "EchoLover"
+            "Soulmate"
         )
 
         self.settings_button.setText(
@@ -683,7 +683,7 @@ class MainWindow(QMainWindow):
 
                 self.tray.showMessage(
 
-                    "EchoLover",
+                    "Soulmate",
 
                     tr("我没有离开，"
                     "双击托盘图标就能找到我"),
