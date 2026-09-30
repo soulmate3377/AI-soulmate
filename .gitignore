@@ -21,3 +21,8 @@ memory/vector_store/
 # æ—¥å¿—ä¸Žæž„å»ºè¾“å‡º
 *.log
 build_*.txt
+
+# SSH Ë½Ô¿¾ø²»ÄÜ½ø²Ö¿â
+id_ed25519*
+*.pem
+*.key
