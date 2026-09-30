@@ -2,18 +2,16 @@
 cd /d "%~dp0"
 
 rem ============================================
-rem  Soulmate 开发版启动器（源码直接跑，不用打包）
+rem  Soulmate 桌面版（GUI）启动器
 rem
-rem  改完代码双击这个，几秒就能看到效果。
-rem  打包一次要四分钟，调界面别走那条路。
+rem  双击这个 = 打开窗口界面和她聊天。
+rem  和终端版（run_cli.bat）是同一个大脑、
+rem  同一份记忆，但同一时刻只能开一个。
 rem
-rem  这是 run_gui.bat 的旧版名字，内容一样：
-rem  两个都是"源码跑桌面版"，
-rem  留着只为不弄坏已有的快捷方式。
-rem
-rem  ECHO_DATA_DIR 指向 SoulmateData，
-rem  不设的话源码会另用 %APPDATA%\Soulmate，
-rem  聊天记录会分成两摊。
+rem  ECHO_DATA_DIR 指向项目旁的 SoulmateData。
+rem  源码运行时 core/paths.py 本来就会自动找到它，
+rem  这里显式设一遍，是为了和 exe / Web 版
+rem  跑在同一份数据上。
 rem
 rem  ---------- 改这个文件前先看这段 ----------
 rem  1) 必须存成 GBK（ANSI）。cmd.exe 不看 BOM，
@@ -33,7 +31,7 @@ call :find_python
 if errorlevel 1 exit /b 1
 
 echo.
-echo  Starting Soulmate (desktop, source mode)...
+echo  Starting Soulmate (desktop GUI)...
 echo  Data dir: %ECHO_DATA_DIR%
 echo.
 

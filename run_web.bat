@@ -1,38 +1,64 @@
 @echo off
-chcp 65001 >nul
 cd /d "%~dp0"
 
 rem ============================================
-rem  Echo Web ç‰ˆå¯åŠ¨å™¨ï¼ˆæ‰‹æœºç”¨ï¼‰
+rem  Soulmate Web °æÆô¶¯Æ÷£¨¿ÉÑ¡£¬¸øÊÖ»úÓÃ£©
 rem
-rem  åŒå‡»è¿™ä¸ªï¼Œç„¶åŽæ‰‹æœºè¿žåŒä¸€ä¸ª WiFiï¼Œ
-rem  æµè§ˆå™¨æ‰“å¼€æŽ§åˆ¶å°é‡Œæ˜¾ç¤ºçš„åœ°å€ã€‚
+rem  ×ÀÃæ°æ£¨run_gui.bat£©²ÅÊÇÖ÷Èë¿Ú£»
+rem  Õâ¸öÊÇ°ÑÍ¬Ò»¸ö´óÄÔ¿ª³ÉÍøÒ³·þÎñ£¬
+rem  ¸øÍ¬Ò» WiFi ÏÂµÄÊÖ»úä¯ÀÀÆ÷ÓÃ¡£
 rem
-rem  ECHO_DATA_DIR æŒ‡å‘ E:\A1\EchoDataï¼Œ
-rem  å’Œæ¡Œé¢ç‰ˆåŒä¸€ä»½è®°å¿†ã€‚
+rem  Æô¶¯ºó¿´¿ØÖÆÌ¨´òÓ¡µÄµØÖ·£º
+rem    http://<±¾»ú¾ÖÓòÍøIP>:<¶Ë¿Ú>/
+rem  µÚÒ»´Î½øÒªÊäÃÜÂë£¬ÃÜÂëÍ¬Ê±´òÓ¡ÔÚ¿ØÖÆÌ¨£¬
+rem  Ò²´æÔÚÊý¾ÝÄ¿Â¼µÄ web_passcode.txt Àï¡£
 rem
-rem  æ³¨æ„ï¼šæ¡Œé¢ç‰ˆå’Œ Web ç‰ˆä¸è¦åŒæ—¶å¼€
-rem  ï¼ˆä¸¤è¾¹å†™åŒä¸€ä»½èŠå¤©è®°å½•ï¼ŒåŒæ—¶å†™ä¼šä¸¢æ¶ˆæ¯ï¼‰ã€‚
+rem  ×¢Òâ£º×ÀÃæ°æ / ÖÕ¶Ë°æ / Web °æ¹²ÓÃÍ¬Ò»·Ý
+rem  ÁÄÌì¼ÇÂ¼£¬Í¬Ò»Ê±¿ÌÖ»¿ªÒ»¸ö¡£
+rem
+rem  ---------- ¸ÄÕâ¸öÎÄ¼þÇ°ÏÈ¿´Õâ¶Î ----------
+rem  1) ±ØÐë´æ³É GBK£¨ANSI£©¡£cmd.exe ²»¿´ BOM£¬
+rem     °´ÏµÍ³´úÂëÒ³ÖðÐÐ½âÎö .bat£¬´æ³É UTF-8
+rem     »áÈÃÖÐÎÄ×¢ÊÍ±äÂÒÂë¡¢Ä³Ð©×Ö½Ú±»µ±ÃüÁîÖ´ÐÐ¡£
+rem  2) ±ØÐëÓÃ CRLF »»ÐÐ¡£cmd.exe ¿¿ÎÄ¼þÆ«ÒÆÖðÐÐ
+rem     ÖØ¶ÁÅú´¦Àí£¬LF-only »á´íÎ»¡¢°ÑºóÐøÐÐ¶Á³ÉÃüÁî¡£
+rem  3) ²»ÒªÐ´ chcp 65001£º½âÎöÍ¾ÖÐ»»´úÂëÒ³»á
+rem     °Ñ¶à×Ö½Ú×Ö·û¶Á¶Ï¡£
+rem  4) »á"Ö´ÐÐ/»ØÏÔ"µÄÄÚÈÝÖ»ÓÃ ASCII£¬ÖÐÎÄÖ»·ÅÔÚ
+rem     rem ×¢ÊÍÀï£»ÒýºÅÁô¸ø²ÎÊýµÄ %* ÓÃ¡£
 rem ============================================
 
-set ECHO_DATA_DIR=E:\A1\EchoData
+set ECHO_DATA_DIR=%~dp0..\SoulmateData
 
-set PY=D:\KimiData\daimon-share\daimon\runtime\python\.venv\Scripts\python.exe
-
-if not exist "%PY%" (
-    echo.
-    echo  æ‰¾ä¸åˆ° Pythonï¼š%PY%
-    echo  æ‰“åŒ…çŽ¯å¢ƒåœ¨ D ç›˜å¦ä¸€ä¸ªå·¥å…·çš„ç›®å½•é‡Œã€‚
-    echo.
-    pause
-    exit /b 1
-)
+call :find_python
+if errorlevel 1 exit /b 1
 
 echo.
-echo  æ­£åœ¨å¯åŠ¨ Echo Web ç‰ˆ...
-echo  æ•°æ®ç›®å½•ï¼š%ECHO_DATA_DIR%
+echo  Starting Soulmate (web UI)...
+echo  Data dir: %ECHO_DATA_DIR%
 echo.
 
-"%PY%" web_server.py
+%PY% web_server.py
 
 pause
+exit /b 0
+
+:find_python
+rem ÓÅÏÈ py -3£¨ÄÜÌôµ½ÒÑ×°µÄ 3.x£©£¬ÍË»Ø PATH ÀïµÄ python
+where py >nul 2>nul
+if not errorlevel 1 (
+    set "PY=py -3"
+    exit /b 0
+)
+where python >nul 2>nul
+if not errorlevel 1 (
+    set "PY=python"
+    exit /b 0
+)
+echo.
+echo  Python not found.
+echo  Install Python 3.12+ and tick "Add python.exe to PATH":
+echo    https://www.python.org/downloads/
+echo.
+pause
+exit /b 1

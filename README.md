@@ -6,7 +6,14 @@
 - **主动发消息**：她会在合适的时间主动找你。背后不是定时器，是一个一千多行的"守门人"——判断时机、避免打扰、做意象去重、记得自己主动说过什么，下次你回话时她自然找补。
 - **有分寸的心情**：她今天可能想聊，也可能不太想；敷衍一句她也不算数。一个不会说"今天不太想聊"的不是人，是服务。
 
-项目以可运行的代码为主体：桌面应用（PySide6）+ 无界面 CLI + 一个 Claude Code Skill 作为便捷入口。你可以换不同的模型、改人设、加语音、设计更聪明的记忆策略。
+她有两个入口，共用同一个大脑、同一份记忆：
+
+| 入口 | 文件 | 适合 |
+| --- | --- | --- |
+| **桌面版（GUI）** | `main.py` | 日常使用：窗口界面、气泡消息、设置页、开机自启 |
+| **终端版（CLI）** | `companion.py` | 终端党、脚本调用、拿来当库嵌进别的项目 |
+
+> 两个入口共用一把运行锁：**同一时刻只能开一个**，同时开会互相覆盖聊天记录。想要哪个就开哪个。
 
 作为第一次做开源项目的人，我更想探索：**当 AI 有了记忆和主动性，人和它的联结会变成什么样？**
 
@@ -24,24 +31,48 @@
 
 ## 快速开始
 
-需要 Python 3.12+ 和 Windows（DPAPI 加密与自启用到 Windows；macOS/Linux 未测试）。
+需要 **Python 3.12+** 和 **Windows**（DPAPI 加密与自启用到 Windows；macOS/Linux 未测试）。
 
 ```bash
 git clone https://github.com/soulmate3377/AI-soulmate.git
 cd AI-soulmate
 pip install -r requirements.txt
+```
+
+首次使用先配好模型，两种方式任选：
+
+- **跟着向导走**（推荐）：启动桌面版，会出现语言选择 → 设置向导（选服务商、填 API Key、给她起名字）→ 主界面。
+- **用环境变量**：不想开窗口的话，设好 `ECHO_API_KEY` 就能直接跑终端版。
+
+### 入口一：桌面版（GUI）
+
+```bash
 python main.py
 ```
 
+Windows 上也可以直接双击 **`run_gui.bat`**（等价于上面这条，并且保证和 exe / Web 版用同一份数据）。
+
 首次启动依次出现：语言选择 → 设置向导（选服务商、填 API Key、给她起名字）→ 主界面。
 
-终端党 / Claude Code 用户可以直接用无界面入口：
+### 入口二：终端版（CLI）
 
 ```bash
-python companion.py                # 交互聊天，她会主动开口
-python companion.py "在吗"          # 单条模式
-python companion.py --apply-persona  # 修改 config/persona.yaml 后应用人设
+python companion.py                  # 交互聊天，她会主动开口（〔她主动〕标记）
+python companion.py "在吗"            # 单条模式：说一句，回完就退出
+python companion.py --apply-persona   # 修改 config/persona.yaml 后应用人设
 ```
+
+Windows 上双击 **`run_cli.bat`** 就是 `python companion.py`。
+
+`companion.py` 同时也是给别的项目当库用的样板：`Brain()` 拿到手，`think_stream()` 就是她。
+
+### 可选：Web 版（手机浏览器）
+
+```bash
+python web_server.py     # 或双击 run_web.bat
+```
+
+把同一个大脑开成局域网 HTTP 服务，同一 WiFi 下手机浏览器就能聊。密码第一次启动自动生成，打印在控制台并存进数据目录的 `web_passcode.txt`。同样只能和另两个入口二选一开着。
 
 Embedding 模型（BAAI/bge-small-zh-v1.5，93MB）首次使用记忆功能时自动下载。
 
@@ -49,19 +80,22 @@ Embedding 模型（BAAI/bge-small-zh-v1.5，93MB）首次使用记忆功能时�
 
 - **服务商**：设置页内置 DeepSeek / Kimi / 智谱 / 千问 / OpenRouter 预设，或手填任意 OpenAI 兼容地址
 - **三角色分工**：理解模型（每句话前读心，建议开思考的）、回看模型（说完复盘，选强的）、说话模型（她开口，选快的）——都可用环境变量 `ECHO_MODEL_THINK / ECHO_MODEL_REFLECT / ECHO_MODEL_SPEAK` 覆盖
+- **API Key**：环境变量 `ECHO_API_KEY`（或旧的 `DEEPSEEK_API_KEY`）优先，其次是设置页保存的 DPAPI 密文
 - **人设**：`config/persona.yaml`，改完运行 `python companion.py --apply-persona`
 - **主动消息频率**：`persona.yaml` 的 `proactive.max_per_day`
 
 ## 用 Claude Code 驱动
 
-仓库内置 Skill（`.claude/skills/echo-lover/`）。把这个仓库放进你的 Claude Code 工作区，说"和 Soulmate 聊天"或"帮我改 Soulmate 的人设"，它会调用 `companion.py` 完成操作。Skill 只做入口，所有逻辑都在 Python 里——见 [SKILL.md](.claude/skills/echo-lover/SKILL.md)。
+仓库内置 Skill（`.claude/skills/soulmate/`）。把这个仓库放进你的 Claude Code 工作区，说"和 Soulmate 聊天"或"帮我改 Soulmate 的人设"，它会调用 `companion.py` 完成操作。Skill 只做入口，所有逻辑都在 Python 里——见 [SKILL.md](.claude/skills/soulmate/SKILL.md)。
 
 ## 架构一览
 
 ```
 main.py                 桌面端入口（PySide6）
-companion.py            无界面 CLI / 库入口
-web_server.py           网页端服务（可选）
+companion.py            终端入口：交互 / 单条 / 当库用
+web_server.py           网页端服务（可选，手机用）
+run_gui.bat             GUI 启动器（Windows 双击）
+run_cli.bat             CLI 启动器（Windows 双击）
 core/
   brain.py              大脑：把十几个子系统拼成一次对话
   proactive_guard.py    主动消息守门人
@@ -79,6 +113,8 @@ config/persona.yaml     人设配置
 .claude/skills/         Claude Code Skill
 ```
 
+**两个入口是同一个大脑**：GUI 和 CLI 都构造 `core/brain.py` 的 `Brain`，记忆、人格、主动消息、运行锁全部共用，所以你在终端里说的话，窗口里她也记得。
+
 ## 数据与隐私
 
 - 所有对话和记忆只存在你自己的电脑上：程序旁的 `SoulmateData/`，没有就是 `%APPDATA%/Soulmate/`。**备份这个目录 = 备份她**
@@ -95,7 +131,7 @@ config/persona.yaml     人设配置
 
 ## 贡献
 
-Issue 和 PR 都欢迎。改代码前先跑一遍现有流程（桌面版 + companion.py），界面文案记得过 `ui/i18n.py` 的双语表。
+Issue 和 PR 都欢迎。改代码前先跑一遍现有流程（**桌面版 + `companion.py` 两个入口都过一遍**），界面文案记得过 `ui/i18n.py` 的双语表。
 
 ## License
 

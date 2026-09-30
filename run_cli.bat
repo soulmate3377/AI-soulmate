@@ -2,18 +2,19 @@
 cd /d "%~dp0"
 
 rem ============================================
-rem  Soulmate 开发版启动器（源码直接跑，不用打包）
+rem  Soulmate 终端版（CLI）启动器
 rem
-rem  改完代码双击这个，几秒就能看到效果。
-rem  打包一次要四分钟，调界面别走那条路。
+rem  双击这个 = 在命令行窗口里和她聊天，
+rem  不用开图形界面。她会自己主动开口，
+rem  主动说的话带〔她主动〕标记。
 rem
-rem  这是 run_gui.bat 的旧版名字，内容一样：
-rem  两个都是"源码跑桌面版"，
-rem  留着只为不弄坏已有的快捷方式。
+rem  等价于手动执行：
+rem    python companion.py                 交互聊天
+rem    python companion.py "在吗"           单条模式
+rem    python companion.py --apply-persona  应用人设改动
 rem
-rem  ECHO_DATA_DIR 指向 SoulmateData，
-rem  不设的话源码会另用 %APPDATA%\Soulmate，
-rem  聊天记录会分成两摊。
+rem  和桌面版（run_gui.bat）共用同一个大脑、
+rem  同一份记忆，但同一时刻只能开一个。
 rem
 rem  ---------- 改这个文件前先看这段 ----------
 rem  1) 必须存成 GBK（ANSI）。cmd.exe 不看 BOM，
@@ -33,17 +34,11 @@ call :find_python
 if errorlevel 1 exit /b 1
 
 echo.
-echo  Starting Soulmate (desktop, source mode)...
+echo  Starting Soulmate (terminal CLI)...
 echo  Data dir: %ECHO_DATA_DIR%
 echo.
 
-%PY% main.py
-
-if errorlevel 1 (
-    echo.
-    echo  Soulmate exited with code %errorlevel%
-    echo  See log: %%APPDATA%%\Soulmate\echo_error.log
-)
+%PY% companion.py %*
 
 pause
 exit /b 0
