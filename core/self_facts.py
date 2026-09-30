@@ -88,11 +88,81 @@ FACT_RULES = (
 def facts_text():
     """
     拼成进提示词的整块文本。
+
+    config/persona.yaml 里写了 facts 列表时
+    优先用那份（人设外置），
+    没有就用这里的出厂示例。
     """
+
+    persona = _persona_facts()
+
+    if persona:
+
+        body = "\n\n".join(persona)
+
+    else:
+
+        body = "\n\n".join((
+            FACT_ESTABLISHED,
+            FACT_LIFE,
+            FACT_DEFAULTS,
+        ))
+
     return (
         "# 关于你自己的事实\n\n"
-        f"{FACT_ESTABLISHED}\n\n"
-        f"{FACT_LIFE}\n\n"
-        f"{FACT_DEFAULTS}\n\n"
+        f"{body}\n\n"
         f"{FACT_RULES}"
     )
+
+
+def _persona_facts():
+
+    """
+    从 config/persona.yaml 读 facts 列表。
+    文件不存在 / 没写 / 解析失败
+    都返回 None，走代码内默认。
+    """
+
+    try:
+
+        from pathlib import Path
+
+        import yaml
+
+        p = (
+            Path(__file__)
+            .resolve().parent.parent
+            / "config"
+            / "persona.yaml"
+        )
+
+        if not p.exists():
+
+            return None
+
+        data = (
+            yaml.safe_load(
+                p.read_text(
+                    encoding="utf-8"
+                )
+            )
+            or {}
+        )
+
+        facts = data.get("facts")
+
+        if not isinstance(facts, list):
+
+            return None
+
+        cleaned = [
+            str(x).strip()
+            for x in facts
+            if str(x).strip()
+        ]
+
+        return cleaned or None
+
+    except Exception:
+
+        return None

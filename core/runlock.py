@@ -149,14 +149,14 @@ def _read_lock():
 
 
 _KIND_LABEL = {
-    "desktop": "桌面版 Soulmate",
+    "desktop": "桌面版 EchoLover",
     "web": "网页端服务",
 }
 
 
 def kind_label(kind):
     return _KIND_LABEL.get(
-        kind, kind or "另一个 Soulmate"
+        kind, kind or "另一个 EchoLover"
     )
 
 

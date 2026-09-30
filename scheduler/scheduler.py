@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from core.event import SoulmateEvent
+from core.event import EchoLoverEvent
 
 
 class Scheduler:

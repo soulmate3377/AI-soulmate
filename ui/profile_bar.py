@@ -370,7 +370,7 @@ class ProfileBar(QWidget):
 
         if name is None:
 
-            name = "Soulmate"
+            name = "EchoLover"
 
 
         self.name_label.setText(
@@ -528,7 +528,7 @@ class ProfileBar(QWidget):
         t = self.theme
 
         self.avatar_label.setText(
-            "Soulmate"
+            "EchoLover"
         )
 
         self.avatar_label.setStyleSheet(

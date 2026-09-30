@@ -19,7 +19,7 @@
 #
 # 语言在窗口创建时生效：
 # 主界面是启动时就建好的控件树，
-# 切换语言后重启 Soulmate 才会
+# 切换语言后重启 EchoLover 才会
 # 全部换过来。
 
 from core import storage
@@ -121,7 +121,7 @@ def her_name():
     """
     她的显示名：
     档案里起过的名字优先，
-    没有就用 Soulmate。
+    没有就用 EchoLover。
     """
 
     try:
@@ -132,12 +132,12 @@ def her_name():
 
         return (
             Identity().get("echo_name")
-            or "Soulmate"
+            or "EchoLover"
         )
 
     except Exception:
 
-        return "Soulmate"
+        return "EchoLover"
 
 
 
@@ -177,7 +177,7 @@ EN_MAP = {
 
     # ---- 托盘 / 记忆窗 ----
 
-    "打开 Soulmate": "Open Soulmate",
+    "打开 EchoLover": "Open EchoLover",
     "退出": "Quit",
     "她记错了就删掉这条":
         "Delete if she misremembers",
@@ -187,15 +187,15 @@ EN_MAP = {
         "She will truly remember nothing.\n\n"
         "Are you sure?",
     "语言已保存": "Language saved",
-    "重启 Soulmate 后整个界面"
+    "重启 EchoLover 后整个界面"
     "就会切换成新语言。\n"
     "现在就重启吗？":
-        "Soulmate will restart with the "
+        "EchoLover will restart with the "
         "new language.\nRestart now?",
 
     # ---- 主窗口 / 托盘 ----
 
-    "Soulmate 设置": "Soulmate Settings",
+    "EchoLover 设置": "EchoLover Settings",
     "⚙ 设置": "⚙ Settings",
     "⇩ 导出": "⇩ Export",
     "我没有离开，"
@@ -257,8 +257,8 @@ EN_MAP = {
         "Use Export to read everything.",
     "导出聊天记录": "Export chat",
     "文本文件 (*.txt)": "Text files (*.txt)",
-    "# Soulmate 聊天记录":
-        "# Soulmate chat history",
+    "# EchoLover 聊天记录":
+        "# EchoLover chat history",
     "# 共 %d 条 · 导出于 %s":
         "# %d messages · exported %s",
 
@@ -297,9 +297,9 @@ EN_MAP = {
     "打包后的 Echo.exe 支持":
         "Available in the packaged app",
     "语言": "Language",
-    "切换语言后重启 Soulmate "
+    "切换语言后重启 EchoLover "
     "才会全部生效":
-        "Restart Soulmate to fully apply "
+        "Restart EchoLover to fully apply "
         "the language change",
     "保存失败": "Save failed",
     "已保存": "Saved",
@@ -308,8 +308,8 @@ EN_MAP = {
 
     # ---- 首次引导 ----
 
-    "欢迎使用 Soulmate": "Welcome to Soulmate",
-    "你好，我是 Echo": "Hi, I'm Soulmate",
+    "欢迎使用 EchoLover": "Welcome to EchoLover",
+    "你好，我是 Echo": "Hi, I'm EchoLover",
     "先让我能开口说话":
         "First, let me find my voice",
     "我通过大模型思考，"

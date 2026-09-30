@@ -195,7 +195,7 @@ class Perception:
 
                 if item.get("role") == "user"
 
-                else "Soulmate"
+                else "EchoLover"
 
             )
 

@@ -4,7 +4,7 @@ from core.self_facts import facts_text
 
 
 # ==================================================
-# Soulmate 默认角色设定
+# EchoLover 默认角色设定
 #
 # 用户在设置里自定义的字段会覆盖对应部分。
 #
@@ -344,7 +344,7 @@ class Personality:
 
         if not name:
 
-            name = "Soulmate"
+            name = "EchoLover"
 
 
         return f"""

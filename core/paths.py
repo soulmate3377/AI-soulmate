@@ -5,8 +5,8 @@
 # 打包成 exe 后，程序启动目录不确定，
 # 所有用户数据（记忆、关系、人格……）
 # 统一写到系统用户目录：
-#   Windows: %APPDATA%\Soulmate\
-#   其他:    ~/.soulmate/
+#   Windows: %APPDATA%\EchoLover\
+#   其他:    ~/.echolover/
 # 可用环境变量 ECHO_DATA_DIR 覆盖
 # （开发调试用；名字是历史遗留，懒得全改）
 #
@@ -19,7 +19,7 @@ import shutil
 from pathlib import Path
 
 
-APP_NAME = "Soulmate"
+APP_NAME = "EchoLover"
 
 # 便携模式的数据文件夹名
 # （放在 exe 旁边，跟着U盘走）
@@ -186,7 +186,7 @@ def data_dir():
 
             else:
 
-                base = Path.home() / ".soulmate"
+                base = Path.home() / ".echolover"
 
 
     base.mkdir(

@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller 打包配置：Soulmate 桌面版（单文件）
+# PyInstaller 打包配置：EchoLover 桌面版（单文件）
 # 用法：pyinstaller echo.spec --noconfirm
-# 产物：dist/Soulmate.exe 一个文件，双击即用
+# 产物：dist/EchoLover.exe 一个文件，双击即用
 
 from PyInstaller.utils.hooks import collect_all
 
@@ -53,7 +53,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='Soulmate',
+    name='EchoLover',
     debug=False,
     strip=False,
     upx=False,

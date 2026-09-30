@@ -22,7 +22,7 @@ from core.inclination import Inclination
 from core.scheduler import Scheduler
 from core.activity import ActivityEngine
 from core.weather import get_weather
-from core.identity import Identity as SoulmateIdentity
+from core.identity import Identity as EchoLoverIdentity
 from core.perception import Perception
 from core.proactive_guard import (
     followup_same,
@@ -140,7 +140,7 @@ class Brain:
         # 家乡/现居地/职业
         # =========================
 
-        self.echo_identity = SoulmateIdentity()
+        self.echo_identity = EchoLoverIdentity()
 
 
         # =========================

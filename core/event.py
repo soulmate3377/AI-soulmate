@@ -1,4 +1,4 @@
-class SoulmateEvent:
+class EchoLoverEvent:
 
 
 

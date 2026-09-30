@@ -128,6 +128,52 @@ IMAGERY = {
 MAX_PROACTIVE_PER_DAY = 6
 
 
+def _persona_max_per_day():
+
+    """
+    config/persona.yaml 的
+    proactive.max_per_day 可覆盖默认。
+    没配 / 解析失败 → None。
+    """
+
+    try:
+
+        import yaml
+
+        from pathlib import Path
+
+        p = (
+            Path(__file__)
+            .resolve().parent.parent
+            / "config"
+            / "persona.yaml"
+        )
+
+        if not p.exists():
+
+            return None
+
+        data = (
+            yaml.safe_load(
+                p.read_text(
+                    encoding="utf-8"
+                )
+            )
+            or {}
+        )
+
+        value = (
+            (data.get("proactive") or {})
+            .get("max_per_day")
+        )
+
+        return int(value)
+
+    except Exception:
+
+        return None
+
+
 # 敷衍应声词。
 # "嗯""哈哈"这种回了等于没回，
 # 不该把冷却清零。
@@ -522,6 +568,11 @@ class ProactiveGuard:
             or {}
         )
 
+        self.max_per_day = (
+            _persona_max_per_day()
+            or MAX_PROACTIVE_PER_DAY
+        )
+
         self._rollover()
 
 
@@ -857,7 +908,7 @@ class ProactiveGuard:
 
             self.state.get("sent_today", 0)
 
-        ) >= MAX_PROACTIVE_PER_DAY:
+        ) >= self.max_per_day:
 
             return (
                 False,

@@ -37,14 +37,14 @@ import json
 
 
 _SYSTEM = (
-    "你是 Soulmate 的回看层。"
+    "你是 EchoLover 的回看层。"
     "你只输出合法的 json 对象，"
     "不输出任何解释，"
     "不使用 markdown 代码块。"
 )
 
 
-_PROMPT = """Soulmate 刚回了一句话。你只判断一件事：这句回复有没有"凭空编造"。
+_PROMPT = """EchoLover 刚回了一句话。你只判断一件事：这句回复有没有"凭空编造"。
 
 刚才的对话（旧到新）：
 {dialogue}
@@ -52,7 +52,7 @@ _PROMPT = """Soulmate 刚回了一句话。你只判断一件事：这句回复�
 他刚说的：
 {user_message}
 
-Soulmate 回的：
+EchoLover 回的：
 {response}
 
 只有以下三种情况判为不合格，其余一律判合格：
@@ -79,11 +79,11 @@ Soulmate 回的：
 严格输出这个 json：
 {{"passed": true}}
 或
-{{"passed": false, "note": "用一句话说清她错在哪，二三十字以内，用'你'称呼 Soulmate"}}
+{{"passed": false, "note": "用一句话说清她错在哪，二三十字以内，用'你'称呼 EchoLover"}}
 """
 
 
-_PROMPT_PROACTIVE = """Soulmate 刚主动给他发了一条消息（不是回复，是她自己开的口）。你只判断一件事：这条消息有没有"凭空编造"。
+_PROMPT_PROACTIVE = """EchoLover 刚主动给他发了一条消息（不是回复，是她自己开的口）。你只判断一件事：这条消息有没有"凭空编造"。
 
 最近的对话（旧到新）：
 {dialogue}
@@ -91,7 +91,7 @@ _PROMPT_PROACTIVE = """Soulmate 刚主动给他发了一条消息（不是回复
 他之前提过的事（话茬，带时间）：
 {follow_ups}
 
-Soulmate 主动发的：
+EchoLover 主动发的：
 {message}
 
 只有以下三种情况判为不合格，其余一律判合格：
@@ -112,7 +112,7 @@ Soulmate 主动发的：
 严格输出这个 json：
 {{"passed": true}}
 或
-{{"passed": false, "note": "用一句话说清她错在哪，二三十字以内，用'你'称呼 Soulmate"}}
+{{"passed": false, "note": "用一句话说清她错在哪，二三十字以内，用'你'称呼 EchoLover"}}
 """
 
 
@@ -346,7 +346,7 @@ class SelfReflection:
             who = (
                 "他"
                 if item.get("role") == "user"
-                else "Soulmate"
+                else "EchoLover"
             )
 
             lines.append(

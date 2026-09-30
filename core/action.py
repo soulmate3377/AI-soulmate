@@ -27,7 +27,7 @@ class ActionExecutor:
 
         """
 
-        执行Soulmate主动行为
+        执行EchoLover主动行为
 
         """
 

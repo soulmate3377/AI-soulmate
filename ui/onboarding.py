@@ -47,7 +47,7 @@ class OnboardingDialog(QDialog):
 
         super().__init__(parent)
 
-        self.setWindowTitle(tr("欢迎使用 Soulmate"))
+        self.setWindowTitle(tr("欢迎使用 EchoLover"))
 
         self.setModal(True)
 
