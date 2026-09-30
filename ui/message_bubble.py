@@ -165,16 +165,31 @@ class MessageBubble(QWidget):
     def _make_avatar(self):
 
 
-        t = self.theme
-
-        radius = t["avatar_radius"]
-
-
         avatar = QLabel()
 
         avatar.setFixedSize(38, 38)
 
         avatar.setAlignment(Qt.AlignCenter)
+
+
+        # 存引用：
+        # 换主题时重新上色用
+
+        self.avatar_label = avatar
+
+
+        self._style_avatar(avatar)
+
+
+        return avatar
+
+
+    def _style_avatar(self, avatar):
+
+
+        t = self.theme
+
+        radius = t["avatar_radius"]
 
 
         if self.sender == "我":
@@ -214,7 +229,6 @@ class MessageBubble(QWidget):
                         Qt.SmoothTransformation
 
                     )
-
                 )
 
                 avatar.setStyleSheet(
@@ -224,7 +238,7 @@ class MessageBubble(QWidget):
 
             else:
 
-                avatar.setText("Echo")
+                avatar.setText("Soulmate")
 
                 avatar.setStyleSheet(
                     f"""
@@ -238,7 +252,48 @@ class MessageBubble(QWidget):
                 )
 
 
-        return avatar
+    def retheme(self):
+
+        """
+        换主题时被调：
+        自己身上的配色当场重上。
+        """
+
+        self.theme = get_theme()
+
+
+        if self.sender == "系统":
+
+            if self.bubble_label is not None:
+
+                self.bubble_label.setStyleSheet(
+                    f"""
+                    QLabel {{
+                        color:{self.theme['system_color']};
+                        font-size:12px;
+                        padding:4px;
+                        background:transparent;
+                    }}
+                    """
+                )
+
+            return
+
+
+        if self.bubble_label is not None:
+
+            self.bubble_label.setStyleSheet(
+                self._bubble_style()
+            )
+
+
+        if getattr(
+            self, "avatar_label", None
+        ) is not None:
+
+            self._style_avatar(
+                self.avatar_label
+            )
 
 
 

@@ -368,6 +368,11 @@ class SettingsWindow(QWidget):
 
     language_changed = Signal()
 
+    # 配色变了：
+    # 主窗口收到后当场重新上色
+
+    theme_changed = Signal()
+
     def __init__(self):
 
         super().__init__()
@@ -1442,6 +1447,8 @@ class SettingsWindow(QWidget):
 
         set_theme(name)
 
+        self.theme_changed.emit()
+
 
         for key, button in (
 
@@ -1459,12 +1466,10 @@ class SettingsWindow(QWidget):
 
         t = get_theme()
 
-        self.theme_hint.setText(
+        self.theme_hint.setText("")
 
-            "已切换，重启 Echo 后"
-            "所有窗口都是新配色"
-
-        )
+        # 无需提示：
+        # 界面已经当场全部换新
 
         self.theme_hint.setStyleSheet(
             f"font-size:12px;"

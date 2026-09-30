@@ -310,6 +310,46 @@ class ProfileBar(QWidget):
     # 刷新Echo身份信息与当下状态
     # =========================
 
+    def retheme(self):
+
+        """
+        换主题：顶栏底色、
+        名字和状态的颜色重上，
+        状态文字按新主题重新生成。
+        """
+
+        self.theme = get_theme()
+
+        t = self.theme
+
+
+        self.setStyleSheet(
+            f"""
+            QWidget {{
+                background:{t['topbar_bg']};
+            }}
+            """
+        )
+
+        self.name_label.setStyleSheet(
+            f"color:{t['name_color']};"
+        )
+
+
+        current = (
+            self.status_label.text()
+        )
+
+        if current:
+
+            self._set_status(
+                current
+            )
+
+
+        self.refresh()
+
+
     def retranslate(self):
 
         """

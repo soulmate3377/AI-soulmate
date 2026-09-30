@@ -220,7 +220,21 @@ class TimeDivider(QWidget):
 
         label = QLabel(time_text)
 
+        self.time_label = label
+
         label.setAlignment(Qt.AlignCenter)
+
+        self._style_label(label)
+
+
+        layout.addWidget(label)
+
+        self.setLayout(layout)
+
+
+    def _style_label(self, label):
+
+        t = get_theme()
 
         label.setStyleSheet(
             f"""
@@ -234,9 +248,11 @@ class TimeDivider(QWidget):
         )
 
 
-        layout.addWidget(label)
+    def retheme(self):
 
-        self.setLayout(layout)
+        self._style_label(
+            self.time_label
+        )
 
 
 # ==================================================
@@ -270,7 +286,17 @@ class TypingBubble(QWidget):
 
         self.label.setAlignment(Qt.AlignCenter)
 
-        self.label.setStyleSheet(
+        self._style_label(self.label)
+
+
+        layout.addWidget(self.label)
+
+
+    def _style_label(self, label):
+
+        t = get_theme()
+
+        label.setStyleSheet(
             f"""
             QLabel {{
                 background-color:{t['bubble_in_bg']};
@@ -286,7 +312,11 @@ class TypingBubble(QWidget):
         )
 
 
-        layout.addWidget(self.label)
+    def retheme(self):
+
+        self._style_label(
+            self.label
+        )
 
         layout.addStretch()
 
@@ -359,46 +389,7 @@ class ChatWidget(QWidget):
         # =========================
 
         self.setStyleSheet(
-        f"""
-        QWidget {{
-            background-color:{t['window_bg']};
-            color:{t['bubble_in_text']};
-        }}
-
-        QLineEdit {{
-            background-color:{t['input_bg']};
-            border:1px solid {t['input_border']};
-            border-radius:8px;
-            padding:10px 14px;
-            font-size:15px;
-            color:{t['input_text']};
-        }}
-
-        QLineEdit:focus {{
-            border:1px solid {t['input_focus_border']};
-        }}
-
-        QPushButton#sendButton {{
-            background:{t['send_bg']};
-            color:{t['send_text']};
-            border:none;
-            border-radius:8px;
-            padding:10px 24px;
-            font-size:15px;
-        }}
-
-        QPushButton#sendButton:disabled {{
-            background:{t['send_disabled']};
-        }}
-
-        QPushButton#sendButton:hover {{
-            background:{t['send_hover']};
-        }}
-
-        QScrollArea {{
-            border:none;
-        }}
-        """
+            self._chat_style()
         )
 
 
@@ -537,13 +528,10 @@ class ChatWidget(QWidget):
 
         bottom_bar.setObjectName("bottomBar")
 
+        self.bottom_bar = bottom_bar
+
         bottom_bar.setStyleSheet(
-            f"""
-            QWidget#bottomBar {{
-                background-color:{t['inputbar_bg']};
-                border-top:1px solid {t['inputbar_border']};
-            }}
-            """
+            self._bottom_bar_style()
         )
 
 
@@ -2158,6 +2146,119 @@ class ChatWidget(QWidget):
             self._search_dialog.close()
 
             self._search_dialog = None
+
+
+    # =========================
+    # 换主题：
+    # 样式全部从 _chat_style /
+    # _bottom_bar_style 出，
+    # 这里重上一遍；
+    # 消息区里每个气泡、分隔条、
+    # 正在输入气泡各自有 retheme
+    # =========================
+
+    def _chat_style(self):
+
+        t = self.theme
+
+        return f"""
+        QWidget {{
+            background-color:{t['window_bg']};
+            color:{t['bubble_in_text']};
+        }}
+
+        QLineEdit {{
+            background-color:{t['input_bg']};
+            border:1px solid {t['input_border']};
+            border-radius:8px;
+            padding:10px 14px;
+            font-size:15px;
+            color:{t['input_text']};
+        }}
+
+        QLineEdit:focus {{
+            border:1px solid {t['input_focus_border']};
+        }}
+
+        QPushButton#sendButton {{
+            background:{t['send_bg']};
+            color:{t['send_text']};
+            border:none;
+            border-radius:8px;
+            padding:10px 24px;
+            font-size:15px;
+        }}
+
+        QPushButton#sendButton:disabled {{
+            background:{t['send_disabled']};
+        }}
+
+        QPushButton#sendButton:hover {{
+            background:{t['send_hover']};
+        }}
+
+        QScrollArea {{
+            border:none;
+        }}
+        """
+
+
+    def _bottom_bar_style(self):
+
+        t = self.theme
+
+        return f"""
+        QWidget#bottomBar {{
+            background-color:{t['inputbar_bg']};
+            border-top:1px solid {t['inputbar_border']};
+        }}
+        """
+
+
+    def retheme(self):
+
+        self.theme = get_theme()
+
+        self.setStyleSheet(
+            self._chat_style()
+        )
+
+        self.message_widget.setStyleSheet(
+            f"background-color:"
+            f"{self.theme['chat_bg']};"
+        )
+
+        self.bottom_bar.setStyleSheet(
+            self._bottom_bar_style()
+        )
+
+
+        layout = (
+            self.message_layout
+        )
+
+        for i in range(
+            layout.count()
+        ):
+
+            item = layout.itemAt(i)
+
+            w = (
+                item.widget()
+                if item else None
+            )
+
+            if w is None:
+
+                continue
+
+            retheme = getattr(
+                w, "retheme", None
+            )
+
+            if retheme:
+
+                retheme()
 
 
     def _open_search(self):

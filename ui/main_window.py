@@ -70,41 +70,7 @@ class MainWindow(QMainWindow):
 
 
 
-        self.setStyleSheet(
-            f"""
-
-            QMainWindow {{
-
-                background-color:{t['window_bg']};
-
-            }}
-
-
-            QPushButton#settingsButton, QPushButton#topBarButton {{
-
-                background-color:transparent;
-
-                color:{t['settings_color']};
-
-                border:none;
-
-                border-radius:6px;
-
-                padding:8px 14px;
-
-                font-size:14px;
-
-            }}
-
-
-            QPushButton#settingsButton:hover, QPushButton#topBarButton:hover {{
-
-                background-color:{t['settings_hover']};
-
-            }}
-
-            """
-        )
+        self._apply_window_style()
 
 
 
@@ -139,6 +105,8 @@ class MainWindow(QMainWindow):
         # =========================
 
         top_bar = QWidget()
+
+        self.top_bar = top_bar
 
 
         top_layout = QHBoxLayout()
@@ -215,15 +183,7 @@ class MainWindow(QMainWindow):
         # 顶栏：主题底色 + 底部细分割线
 
         top_bar.setStyleSheet(
-            f"""
-            QWidget {{
-                background-color:{t['topbar_bg']};
-                border-bottom:1px solid {t['topbar_border']};
-            }}
-            QLabel {{
-                border:none;
-            }}
-            """
+            self._top_bar_style()
         )
 
 
@@ -297,6 +257,16 @@ class MainWindow(QMainWindow):
         self.settings_window.language_changed.connect(
 
             self._apply_language
+
+        )
+
+
+        # 设置页换配色：
+        # 整个界面当场重新上色
+
+        self.settings_window.theme_changed.connect(
+
+            self._apply_theme
 
         )
 
@@ -495,7 +465,108 @@ class MainWindow(QMainWindow):
             self.profile_bar.refresh()
 
 
-        def _rebuild_settings():
+        self._rebuild_settings_deferred()
+
+
+    # =========================
+    # 换主题即时生效：
+    # 主窗/顶栏重新上样式，
+    # 聊天区与顶栏各自 retheme，
+    # 设置窗口整个重建
+    # =========================
+
+    def _apply_theme(self):
+
+        self._apply_window_style()
+
+
+        if (
+            getattr(self, "top_bar", None)
+            is not None
+        ):
+
+            self.top_bar.setStyleSheet(
+                self._top_bar_style()
+            )
+
+
+        if self.chat is not None:
+
+            self.chat.retheme()
+
+
+        if (
+            self.profile_bar is not None
+        ):
+
+            self.profile_bar.retheme()
+
+
+        self._rebuild_settings_deferred()
+
+
+    def _apply_window_style(self):
+
+        t = get_theme()
+
+        self.setStyleSheet(
+            f"""
+
+            QMainWindow {{
+
+                background-color:{t['window_bg']};
+
+            }}
+
+
+            QPushButton#settingsButton, QPushButton#topBarButton {{
+
+                background-color:transparent;
+
+                color:{t['settings_color']};
+
+                border:none;
+
+                border-radius:6px;
+
+                padding:8px 14px;
+
+                font-size:14px;
+
+            }}
+
+
+            QPushButton#settingsButton:hover, QPushButton#topBarButton:hover {{
+
+                background-color:{t['settings_hover']};
+
+            }}
+
+            """
+        )
+
+
+    def _top_bar_style(self):
+
+        t = get_theme()
+
+        return f"""
+        QWidget {{
+            background-color:{t['topbar_bg']};
+            border-bottom:1px solid {t['topbar_border']};
+        }}
+        QLabel {{
+            border:none;
+        }}
+        """
+
+
+    def _rebuild_settings_deferred(self):
+
+        # 自己重建自己要缓一拍：
+        # 等信号槽走完再拆旧窗口
+
+        def _rebuild():
 
             old = (
                 self.settings_window
@@ -530,6 +601,12 @@ class MainWindow(QMainWindow):
 
             )
 
+            self.settings_window.theme_changed.connect(
+
+                self._apply_theme
+
+            )
+
 
             if was_visible:
 
@@ -548,12 +625,9 @@ class MainWindow(QMainWindow):
                 old.deleteLater()
 
 
-        # 自己重建自己要缓一拍：
-        # 等信号槽走完再拆旧窗口
-
         QTimer.singleShot(
             0,
-            _rebuild_settings,
+            _rebuild,
         )
 
 
