@@ -207,6 +207,7 @@ EN_MAP = {
 
     # ---- 聊天 ----
 
+    "和她说点什么...": "Say something to her...",
     "你好，我是%s。": "Hi, I'm %s.",
     "很高兴认识你": "Nice to meet you",
     "（先去右上角「⚙ 设置」"

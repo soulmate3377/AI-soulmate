@@ -291,6 +291,16 @@ class MainWindow(QMainWindow):
         )
 
 
+        # 设置页切语言：
+        # 整个界面当场换文字
+
+        self.settings_window.language_changed.connect(
+
+            self._apply_language
+
+        )
+
+
 
         # =========================
         # 设置中心组件
@@ -397,6 +407,29 @@ class MainWindow(QMainWindow):
         self.tray.setToolTip("Soulmate")
 
 
+        self._rebuild_tray_menu()
+
+
+        self.tray.show()
+
+
+        self.tray.activated.connect(
+            self._on_tray_activated
+        )
+
+
+    def _rebuild_tray_menu(self):
+
+        """
+        托盘菜单按当前语言重建。
+        语言切换时整个换一遍。
+        """
+
+        if self.tray is None:
+
+            return
+
+
         menu = QMenu()
 
         show_action = menu.addAction(
@@ -417,13 +450,111 @@ class MainWindow(QMainWindow):
 
         self.tray.setContextMenu(menu)
 
+        # 菜单对象要自己持有，
+        # 不然被回收就弹不出来了
 
-        self.tray.activated.connect(
-            self._on_tray_activated
+        self._tray_menu = menu
+
+
+    # =========================
+    # 语言整体即时切换
+    # --------------------------------------------------
+    # 设置页切语言 → 发 language_changed →
+    # 这里把界面上所有文字当场换掉：
+    # 标题、按钮、托盘、聊天输入区，
+    # 设置窗口整个重建（它没有状态），
+    # 记忆窗跟着旧设置实例一起丢弃，
+    # 顶栏状态按新语言重新生成。
+    # 不用重启。
+    # =========================
+
+    def _apply_language(self):
+
+        self.setWindowTitle(
+            "Soulmate"
         )
 
+        self.settings_button.setText(
+            tr("⚙ 设置")
+        )
 
-        self.tray.show()
+        self.export_button.setText(
+            tr("⇩ 导出")
+        )
+
+        self._rebuild_tray_menu()
+
+
+        if self.chat is not None:
+
+            self.chat.retranslate()
+
+
+        if self.profile_bar is not None:
+
+            self.profile_bar.refresh()
+
+
+        def _rebuild_settings():
+
+            old = (
+                self.settings_window
+            )
+
+            was_visible = (
+                old is not None
+                and old.isVisible()
+            )
+
+
+            self.settings_window = (
+                SettingsWindow()
+            )
+
+
+            self.settings_window.settings_saved.connect(
+
+                self.profile_bar.refresh
+
+            )
+
+            self.settings_window.settings_saved.connect(
+
+                self.chat.retry_brain
+
+            )
+
+            self.settings_window.language_changed.connect(
+
+                self._apply_language
+
+            )
+
+
+            if was_visible:
+
+                self.settings_window.show()
+
+
+            if old is not None:
+
+                if (
+                    old.memory_window
+                    is not None
+                ):
+
+                    old.memory_window.close()
+
+                old.deleteLater()
+
+
+        # 自己重建自己要缓一拍：
+        # 等信号槽走完再拆旧窗口
+
+        QTimer.singleShot(
+            0,
+            _rebuild_settings,
+        )
 
 
     def _on_tray_activated(self, reason):

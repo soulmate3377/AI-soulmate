@@ -2133,6 +2133,33 @@ class ChatWidget(QWidget):
     # 聊天记录搜索（Ctrl+F）
     # =========================
 
+    def retranslate(self):
+
+        """
+        语言切换时被调：
+        把自己身上的文字当场换掉。
+        已在屏幕上的消息内容不动
+        （那是聊天内容，不是界面文字）。
+        """
+
+        self.send_button.setText(
+            tr("发送")
+        )
+
+        self.input_box.setPlaceholderText(
+            tr("和她说点什么...")
+        )
+
+        if (
+            self._search_dialog
+            is not None
+        ):
+
+            self._search_dialog.close()
+
+            self._search_dialog = None
+
+
     def _open_search(self):
 
 

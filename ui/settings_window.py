@@ -363,6 +363,11 @@ class SettingsWindow(QWidget):
 
     settings_saved = Signal()
 
+    # 语言变了：
+    # 主窗口收到后当场整体换文字
+
+    language_changed = Signal()
+
     def __init__(self):
 
         super().__init__()
@@ -1644,66 +1649,14 @@ class SettingsWindow(QWidget):
 
             return
 
+
+        # 存档 + 广播：
+        # 整个界面由主窗口当场换文字，
+        # 这个设置窗口会被整体重建
+
         i18n.set_language(code)
 
-
-        answer = QMessageBox.question(
-
-            self,
-
-            tr("语言已保存"),
-
-            tr("重启 Soulmate 后整个界面"
-            "就会切换成新语言。\n"
-            "现在就重启吗？"),
-
-            QMessageBox.Yes
-            | QMessageBox.No,
-
-            QMessageBox.No,
-
-        )
-
-
-        if answer == QMessageBox.Yes:
-
-            self._restart_app()
-
-
-
-    def _restart_app(self):
-
-        """
-        拉起一个新自己，再退出。
-        """
-
-        import os as _os
-
-        from pathlib import Path
-
-        from PySide6.QtCore import (
-            QProcess,
-            QApplication,
-        )
-
-        main_py = (
-
-            Path(__file__)
-            .resolve().parent.parent
-            / "main.py"
-
-        )
-
-
-        QProcess.startDetached(
-            sys.executable,
-            [str(main_py)],
-            str(main_py.parent),
-        )
-
-
-        QApplication.quit()
-
+        self.language_changed.emit()
 
 
     # =====================

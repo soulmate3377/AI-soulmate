@@ -310,6 +310,16 @@ class ProfileBar(QWidget):
     # 刷新Echo身份信息与当下状态
     # =========================
 
+    def retranslate(self):
+
+        """
+        语言切换：状态文字由
+        refresh 按新语言重新生成。
+        """
+
+        self.refresh()
+
+
     def refresh(self):
 
 
