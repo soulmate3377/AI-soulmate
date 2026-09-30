@@ -5,12 +5,38 @@ Verify that a comment-only rewrite changed nothing but comments.
 
 How it works / 原理
 ------------------
-Python's own tokenizer splits source into tokens. We keep every token
-EXCEPT COMMENT, and compare the remaining stream with the original.
-If the streams match, no code, string, number or indentation changed.
+Python's tokenizer splits source into tokens. We strip comment-only lines
+from the source text FIRST, then compare the resulting token stream with
+the original treated the same way.
 
-用 Python 官方 tokenizer 把源码切成 token，丢掉 COMMENT 后对比原始文件。
-token 流一致 => 代码、字符串、数字、缩进全都没变。
+先用源码级过滤把「整行注释」物理删掉，再对比两边的 token 流。
+
+Why strip at source level instead of dropping COMMENT tokens?
+为什么要在源码层剥离，而不是简单丢掉 COMMENT token？
+A comment line produces COMMENT + NEWLINE, and a blank line produces just
+NL. If we only drop COMMENT, every removed comment line shifts the token
+stream and a genuine simplification would look like a code change.
+
+一行注释产生 COMMENT + NEWLINE，一个空行只产生 NL。如果只丢 COMMENT，
+那么每删掉一行注释都会让 token 流错位，真正的注释精简会被误判成改代码。
+
+Stripping comment-only lines first means:
+- comment lines may be added, removed or rewritten freely
+- BLANK LINES may also be added or removed freely
+- code, string literals, numbers and indentation are still compared strictly
+
+剥离整行注释后：
+- 注释行可以自由增删改写
+- 空行也可以自由增删（空行不影响运行，也不该拦住注释精简）
+- 代码、字符串字面量、数字、缩进仍然严格逐字比对
+
+Note / 注意
+----------
+Docstrings are STRING tokens and are compared strictly, so this tool will
+report CODE_CHANGED if a docstring text is edited. That is intentional:
+docstrings are treated as code here, never rewritten.
+docstring 属于 STRING token，会被严格比对。改了它就会报 CODE_CHANGED——
+这是刻意的：本工具把 docstring 当代码看待，不允许改写。
 
 Usage / 用法
 -----------
@@ -19,15 +45,21 @@ Usage / 用法
 """
 
 import json
+import re
 import subprocess
 import sys
 import tokenize
-from io import BytesIO
+from io import StringIO
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
 GIT = r"D:\Git\cmd\git.exe"
+
+# A line whose first non-space character is '#', optionally keeping the
+# indentation so that INDENT/DEDENT structure still matches.
+# 行首（允许前导空白）就是 # 的行，保留缩进以免破坏 INDENT/DEDENT 结构。
+_COMMENT_LINE = re.compile(r"^(?P<indent>[ \t]*)#.*$")
 
 
 def normalize(text):
@@ -37,35 +69,64 @@ def normalize(text):
     去掉 CR，让 LF 与 CRLF 视为相同。
     The repo stores LF but the working tree may carry CRLF because of
     core.autocrlf; that is a checkout artifact, not a code change.
-    Otherwise every token string is compared verbatim.
 
     仓库里存 LF，工作区因 core.autocrlf 可能是 CRLF，
-    那只是检出产物，不是代码改动。除换行外一律逐字严格比对。
+    那只是检出产物，不是代码改动。
     """
 
     return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
-def code_tokens(source_bytes):
+def strip_comment_lines(source):
     """
-    Return the token stream with comments dropped.
+    Reduce source to its code lines: no blank lines, no comment-only lines.
 
-    返回剔除 COMMENT 后的 token 流。
-    Comments carry no runtime meaning, so dropping only them keeps the
-    comparison strict about everything else.
+    把源码归约成「只有代码行」：去掉空行，去掉整行注释。
+    Both sides of the comparison get the same treatment, so comment lines
+    and blank lines may be added or removed freely without affecting the
+    result, while code text and indentation are preserved verbatim.
 
-    注释不影响运行，所以只丢它，其余一律严格比对。
+    比对双方都做同样处理，因此注释行与空行的增删不会影响结果，
+    而代码文本与缩进被逐字保留下来。
     """
 
     out = []
+    for raw in source.split("\n"):
+        if _COMMENT_LINE.match(raw):
+            continue
+        if raw.strip() == "":
+            continue
+        out.append(raw)
+    return "\n".join(out)
+
+
+def code_tokens(source_text):
+    """
+    Token stream of the comment-stripped source, comments dropped.
+
+    对剥离注释后的源码取 token 流，并丢掉 COMMENT。
+    """
+
+    stripped = strip_comment_lines(source_text)
+    out = []
     try:
-        for tok in tokenize.tokenize(BytesIO(normalize(source_bytes.decode("utf-8")).encode("utf-8")).readline):
+        for tok in tokenize.generate_tokens(StringIO(stripped).readline):
             if tok.type == tokenize.COMMENT:
                 continue
             out.append((tok.type, normalize(tok.string)))
     except Exception as exc:
         return None, f"tokenize failed: {exc}"
     return out, None
+
+
+def count_comment_lines(source_text):
+    """
+    Comment-only lines, for reporting only.
+
+    仅用于报告：整行注释的行数。
+    """
+
+    return sum(1 for line in source_text.split("\n") if _COMMENT_LINE.match(line))
 
 
 def git_show(path):
@@ -81,7 +142,7 @@ def git_show(path):
             capture_output=True,
             check=True,
         )
-        return res.stdout
+        return res.stdout.decode("utf-8")
     except subprocess.CalledProcessError:
         return None
 
@@ -103,50 +164,37 @@ def main():
             results.append({"file": rel, "status": "MISSING", "detail": "file gone"})
             continue
 
-        old_bytes = git_show(rel)
-        if old_bytes is None:
+        old_text = git_show(rel)
+        if old_text is None:
             results.append({"file": rel, "status": "NEW", "detail": "not in HEAD"})
             continue
 
-        new_bytes = local.read_bytes()
+        new_text = local.read_text(encoding="utf-8")
 
-        old_toks, err = code_tokens(old_bytes)
+        old_toks, err = code_tokens(old_text)
         if err:
             results.append({"file": rel, "status": "ERROR", "detail": f"old: {err}"})
             continue
-        new_toks, err = code_tokens(new_bytes)
+        new_toks, err = code_tokens(new_text)
         if err:
             results.append({"file": rel, "status": "ERROR", "detail": f"new: {err}"})
             continue
 
-        # Count comment lines so we can report how much was rewritten.
-        old_comments = sum(
-            1 for t in tokenize.tokenize(BytesIO(old_bytes).readline)
-            if t.type == tokenize.COMMENT
-        )
-        new_comments = sum(
-            1 for t in tokenize.tokenize(BytesIO(new_bytes).readline)
-            if t.type == tokenize.COMMENT
-        )
+        old_c = count_comment_lines(old_text)
+        new_c = count_comment_lines(new_text)
 
         if old_toks == new_toks:
-            # Normalize line endings before deciding whether the file was
-            # actually rewritten; CRLF vs LF is a checkout artifact.
-            # 判断是否真的改写过之前先归一化换行，CRLF/LF 只是检出差异。
-            content_same = normalize(old_bytes.decode("utf-8")) == normalize(new_bytes.decode("utf-8"))
-            if content_same:
-                status = "UNCHANGED"
-            else:
-                status = "COMMENTS_ONLY"
+            status = "UNCHANGED" if normalize(old_text) == normalize(new_text) else "COMMENTS_ONLY"
             results.append({
                 "file": rel,
                 "status": status,
-                "old_comments": old_comments,
-                "new_comments": new_comments,
+                "old_comments": old_c,
+                "new_comments": new_c,
+                "old_lines": len(normalize(old_text).split("\n")),
+                "new_lines": len(normalize(new_text).split("\n")),
                 "detail": "",
             })
         else:
-            # Locate the first divergence to make fixing easy.
             where = "?"
             for i in range(max(len(old_toks), len(new_toks))):
                 a = old_toks[i] if i < len(old_toks) else None
@@ -157,6 +205,8 @@ def main():
             results.append({
                 "file": rel,
                 "status": "CODE_CHANGED",
+                "old_comments": old_c,
+                "new_comments": new_c,
                 "detail": where,
             })
 
@@ -168,27 +218,33 @@ def main():
     changed = [r for r in results if r["status"] == "COMMENTS_ONLY"]
     same = [r for r in results if r["status"] == "UNCHANGED"]
 
-    print("=" * 62)
+    print("=" * 66)
     print("Comment-only verification / 注释改写校验")
-    print("=" * 62)
+    print("=" * 66)
     print(f"comments-only rewrite : {len(changed)}")
     print(f"untouched             : {len(same)}")
     print(f"PROBLEMS              : {len(bad)}")
     print()
+
     if changed:
-        print("-- rewritten (comments only) / 已改写 --")
-        for r in changed:
-            print(f"  {r['file']:<42} comments {r['old_comments']} -> {r['new_comments']}")
+        print("-- rewritten / 已改写（注释行数 变化 / 总行数 变化）--")
+        for r in sorted(changed, key=lambda x: x["old_comments"] - x["new_comments"], reverse=True):
+            dc = r["old_comments"] - r["new_comments"]
+            dl = r["old_lines"] - r["new_lines"]
+            print(f"  {r['file']:<40} comments {r['old_comments']:>3} -> {r['new_comments']:<3} ({dc:+d})"
+                  f"   lines {r['old_lines']:>4} -> {r['new_lines']:<4} ({dl:+d})")
         print()
 
     if bad:
-        print("-- PROBLEMS / 有问题 --")
+        print("-- PROBLEMS / 有问题（代码被改动）--")
         for r in bad:
-            print(f"  {r['file']:<42} {r['status']}: {r['detail']}")
+            print(f"  {r['file']:<40} {r['status']}: {r['detail']}")
         print()
 
-    total_reduction = sum(r["old_comments"] - r["new_comments"] for r in changed)
-    print(f"comment lines removed: {total_reduction}")
+    total_c = sum(r["old_comments"] - r["new_comments"] for r in changed)
+    total_l = sum(r["old_lines"] - r["new_lines"] for r in changed)
+    print(f"comment lines removed : {total_c}")
+    print(f"total lines removed   : {total_l}")
     print("RESULT:", "PASS - code untouched" if not bad else "FAIL - see above")
 
 
