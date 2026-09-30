@@ -14,6 +14,18 @@
 - **有分寸的心情 / Mood with boundaries**：她今天可能想聊，也可能不太想；敷衍一句她也不算数。一个不会说"今天不太想聊"的不是人，是服务。
   Some days she wants to talk, some days she doesn't, and a half-hearted reply doesn't count. Something that can never say "not today" isn't a person, it's a service.
 
+> **这个项目最初是怎么来的**
+>
+> 在项目初期，我发现单个 API 被调用时，对上下文的理解能力太差。思考之后，我对一个 API 做了三次调用：第一次用来**理解**，第二次用来**思考该输出什么**，第三次负责**怎么输出成充满情感的语言**。代码里这三步对应 `llm/api.py` 的三个角色：`think`（理解端，产出情绪/场景/记忆操作）→ `speak`（说话，流式输出）→ `reflect`（回看复盘）。三个角色可以用同一个服务商，也可以分别指定不同模型。
+>
+> 大家可以一同思考如何更好地进行理解，我同时也在努力学习。
+>
+> **Where this started**
+>
+> Early on I found that calling a single API once gave a poor grasp of context. So I ended up calling one API three times: the first to **understand**, the second to **decide what to say**, the third to **shape it into language that carries feeling**. In code these are the three roles in `llm/api.py`: `think` (understanding — emotion, scene, memory ops), `speak` (streaming the reply) and `reflect` (reviewing afterwards). They can share one provider, or use three different models.
+>
+> I'd love for others to think about understanding with me — I'm learning as I go.
+
 她有两个入口，共用同一个大脑、同一份记忆：
 
 | 入口 | 文件 | 适合 |
@@ -123,7 +135,7 @@ Deeper documentation below is in Chinese — the code comments are bilingual.
 ## 模型与配置
 
 - **服务商**：设置页内置 DeepSeek / Kimi / 智谱 / 千问 / OpenRouter 预设，或手填任意 OpenAI 兼容地址
-- **三角色分工**：理解模型（每句话前读心，建议开思考的）、回看模型（说完复盘，选强的）、说话模型（她开口，选快的）——都可用环境变量 `ECHO_MODEL_THINK / ECHO_MODEL_REFLECT / ECHO_MODEL_SPEAK` 覆盖
+- **三角色分工**：理解模型（`think`，每句话前读心，建议开思考的）、回看模型（`reflect`，说完复盘，选强的）、说话模型（`speak`，她开口，选快的）——都可用环境变量 `ECHO_MODEL_THINK / ECHO_MODEL_REFLECT / ECHO_MODEL_SPEAK` 覆盖
 - **API Key**：环境变量 `ECHO_API_KEY`（或旧的 `DEEPSEEK_API_KEY`）优先，其次是设置页保存的 DPAPI 密文
 - **人设**：`config/persona.yaml`，改完运行 `python companion.py --apply-persona`
 - **主动消息频率**：`persona.yaml` 的 `proactive.max_per_day`
