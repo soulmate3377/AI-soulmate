@@ -16,13 +16,13 @@
 
 > **这个项目最初是怎么来的**
 >
-> 在项目初期，我发现单个 API 被调用时，对上下文的理解能力太差。思考之后，我对一个 API 做了三次调用：第一次用来**理解**，第二次用来**思考该输出什么**，第三次负责**怎么输出成充满情感的语言**。代码里这三步对应 `llm/api.py` 的三个角色：`think`（理解端，产出情绪/场景/记忆操作）→ `speak`（说话，流式输出）→ `reflect`（回看复盘）。三个角色可以用同一个服务商，也可以分别指定不同模型。
+> 在项目初期，我发现单个 API 被调用时，对上下文的理解能力太差。思考之后，我对一个 API 做了三次调用：第一次用来**理解**（这句话是什么意思、什么情绪、什么场景），第二次用来**输出**（结合记忆、关系和人格，把该说的话说出来），第三次用来**回看**（复盘刚才说得对不对，影响下一轮）。代码里这三步对应 `llm/api.py` 的三个角色：`think` → `speak` → `reflect`，可以用同一个服务商，也可以分别指定不同模型。
 >
 > 大家可以一同思考如何更好地进行理解，我同时也在努力学习。
 >
 > **Where this started**
 >
-> Early on I found that calling a single API once gave a poor grasp of context. So I ended up calling one API three times: the first to **understand**, the second to **decide what to say**, the third to **shape it into language that carries feeling**. In code these are the three roles in `llm/api.py`: `think` (understanding — emotion, scene, memory ops), `speak` (streaming the reply) and `reflect` (reviewing afterwards). They can share one provider, or use three different models.
+> Early on I found that calling a single API once gave a poor grasp of context. So I ended up calling one API three times: the first to **understand** (what is this message, what emotion, what scene), the second to **reply** (pull in memory, relationship and personality, and say the thing), the third to **review** (check what she just said, and shape the next turn). In code these are the three roles in `llm/api.py`: `think` → `speak` → `reflect`. They can share one provider, or use three different models.
 >
 > I'd love for others to think about understanding with me — I'm learning as I go.
 
