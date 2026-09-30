@@ -1,21 +1,21 @@
 # companion.py
+# Headless entry point — same brain as the GUI (python main.py).
+# Soulmate 的无界面入口，和 GUI（python main.py）是同一个大脑。
 #
-# Soulmate 的无界面入口。
-#
-# ==================================================
+# when to use it
 # 什么时候用这个
-# ==================================================
+#   python companion.py                 interactive chat in the terminal
+#   python companion.py "..."           single shot: one line in, reply, exit
+#   python companion.py --apply-persona write config/persona.yaml into her profile
+# 用法：直接跑就是终端聊天；带一句话是单条模式（回完就退出）；
+# --apply-persona 把 config/persona.yaml 写进她的档案。
 #
-#   python companion.py                交互聊天（终端里聊）
-#   python companion.py "在吗"          单条模式：说一句，回完就退出
-#   python companion.py --apply-persona 把 config/persona.yaml 写进她的档案
-#
-# GUI（python main.py）和这里是同一个大脑：
-# 记忆、人格、主动消息全部共用。
-# 两边共用同一把运行锁——
-# 同一时刻只能开一个，
+# Memory, personality and proactive messages are shared, and both take the
+# same run lock — only one at a time, or they overwrite each other's chat log.
+# 记忆、人格、主动消息全部共用；两边共用同一把运行锁，同一时刻只能开一个，
 # 同时开会互相覆盖聊天记录。
 #
+# Usable as a library too: grab a Brain(), then think_stream() is her.
 # 这个文件也是给别的项目当库用的样板：
 # Brain() 拿到手，think_stream() 就是她。
 
@@ -27,8 +27,8 @@ from datetime import datetime
 
 
 # ==================================================
-# persona.yaml
-# ==================================================
+# persona.yaml -> her profile
+# 把 persona.yaml 写进她的档案
 
 def _load_persona():
 
@@ -105,8 +105,8 @@ def apply_persona():
     )
 
 
-    # 字段映射：
-    # yaml 键 → 档案键
+    # yaml key -> profile key
+    # 字段映射：yaml 键 → 档案键
 
     plan = []
 
@@ -181,8 +181,8 @@ def apply_persona():
 
 
 # ==================================================
+# chat
 # 聊天
-# ==================================================
 
 def _stream_reply(brain, text):
 
@@ -247,9 +247,9 @@ def chat_loop(brain, cm):
     print()
 
 
-    # 主动消息：
-    # 后台线程每分钟问一次守门人。
-    # 开口了就打出来、落进聊天记录，
+    # Proactive messages: a background thread asks the guard once a minute.
+    # If she speaks up, print it and log it, then reflect on it as usual.
+    # 主动消息：后台线程每分钟问一次守门人；开口了就打出来、落进聊天记录，
     # 事后照常走回看。
 
     def proactive_loop():
@@ -403,10 +403,10 @@ def main():
         )
 
 
-    # ==================================================
-    # 运行锁：
-    # 和桌面版共用同一把，
-    # 同时开会互相覆盖聊天记录
+    # Run lock — the same one the desktop app takes.
+    # Two at once would overwrite each other's chat log.
+    # 运行锁：和桌面版共用同一把，
+    # 同时开会互相覆盖聊天记录。
     # ==================================================
 
     from core.runlock import (
@@ -434,8 +434,8 @@ def main():
     cm = ConversationManager()
 
 
-    # 单条模式：
-    # 命令行参数里带的话就是要说的
+    # Single-shot mode: non-flag command-line text is what we send her.
+    # 单条模式：命令行参数里带的话就是要说的
 
     single = " ".join(
         a for a in args

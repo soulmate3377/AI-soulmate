@@ -1,11 +1,11 @@
 # mood.py
 #
+# Soulmate - daily mood
 # Soulmate 的每日心情系统
-#
-# 真人不会每天状态一样。
-# 每天清晨她会"醒"在一个稍微不同的状态里：
-# 有时活泼，有时安静，有时有点犯困。
-# 一天之内保持稳定，第二天重新随机。
+# She wakes up a bit different each day: lively, quiet or sleepy
+# 她每天醒来状态都不一样：有时活泼，有时安静，有时犯困
+# One mood holds all day, then rerolls tomorrow
+# 一天之内保持稳定，第二天重新随机
 
 import json
 import random
@@ -15,7 +15,7 @@ from datetime import datetime
 from core.paths import resolve_data_file
 
 
-# 心情池：描述 + 对回复风格的影响
+# Mood pool: description + how it bends her replies / 心情池
 
 MOODS = [
 
@@ -73,8 +73,8 @@ class Mood:
 
 
     # =====================
-    # 获取今天的心情
-    # 同一天内保持不变
+    # Today's mood: one roll a day, no reroll inside a day
+    # 获取今天的心情：一天只掷一次，当天不重掷
     # =====================
 
     def current(self):
@@ -85,7 +85,7 @@ class Mood:
         )
 
 
-        # 读已有记录
+        # Reuse today's record / 读已有记录
 
         data = None
 
@@ -118,7 +118,7 @@ class Mood:
 
 
 
-        # 新的一天，生成心情
+        # New day: roll and persist / 新的一天，生成心情
 
         mood = random.choice(MOODS)
 

@@ -9,8 +9,8 @@ class PersonalityEvolver:
 
     def __init__(self, state=None):
 
-        # 默认自建状态；
-        # 由 Brain 注入时共享同一份人格状态
+        # Own state by default, shared with Brain when injected
+        # 默认自建状态；由 Brain 注入时共享同一份人格状态
 
         self.state = (
             state or PersonalityState()
@@ -25,7 +25,7 @@ class PersonalityEvolver:
 
 
 
-        # 技术倾向
+        # Tech-leaning interests and goals / 技术倾向
 
         interests = (
             identity.get(

@@ -25,12 +25,10 @@ import sys
 import json
 
 
-# ==================================================
-# config.json 读写（合并式，
-# 不覆盖别的字段）
-# 统一走 core.storage：
-# 原子写入，Key 用 DPAPI 加密
-# ==================================================
+# config.json read/write: merge only, never drop other fields.
+# config.json 读写：只做合并，不覆盖别的字段。
+# Everything goes through core.storage — atomic writes, keys encrypted with DPAPI.
+# 统一走 core.storage：原子写入，Key 用 DPAPI 加密。
 
 from core.storage import (
     load_config,
@@ -42,14 +40,10 @@ from core.storage import (
 )
 
 
-# ==================================================
-# 服务商预设
-# --------------------------------------------------
-# 选一下就把接口地址和示例模型填上，
-# 模型名随时可以手改——
-# 以各家文档的当前叫法为准。
-# 只要接口是 OpenAI 兼容的都能接。
-# ==================================================
+# Provider presets: picking one fills in the base URL and sample models.
+# 服务商预设：选一个就把接口地址和示例模型填上。
+# Model names stay editable — use whatever each vendor calls them today.
+# 模型名随时可手改，以各家文档的当前叫法为准；接口只要是 OpenAI 兼容的都能接。
 
 PROVIDER_PRESETS = {
 
@@ -112,19 +106,14 @@ PROVIDER_PRESETS = {
 CUSTOM_PROVIDER = "自定义（手填地址）"
 
 
-# ==================================================
-# 开机自启（启动文件夹方案）
-#
-# 为什么不放注册表 Run 键：
-# 这台机器上有第三方服务在盯着
-# Run 键，写进去几秒就被删掉。
-# 启动文件夹（shell:startup）里
-# 放一个 .lnk，没人管，用户在
-# 任务管理器里也看得见、可关。
-#
-# 指向 pythonw 直接跑 main.py，
-# 数据目录由 paths.py 自动发现。
-# ==================================================
+# Autostart through the Startup folder, not the registry Run key.
+# 开机自启走启动文件夹方案，不放注册表 Run 键。
+# A third-party service on this machine watches Run and wipes entries within seconds;
+# 这台机器上有第三方服务盯着 Run 键，写进去几秒就被删掉。
+# a .lnk in shell:startup is left alone and stays visible in Task Manager.
+# 启动文件夹（shell:startup）里放个 .lnk 没人管，用户在任务管理器里也看得见、可关。
+# It points pythonw at main.py; paths.py finds the data dir on its own.
+# 指向 pythonw 直接跑 main.py，数据目录由 paths.py 自动发现。
 
 def _autostart_lnk():
 
@@ -165,9 +154,10 @@ def _shortcut_target():
         ))
 
 
-    # 无窗口启动一律用 pythonw：
-    # 就算当前跑的是 console 版，
-    # 自启也不能开机闪黑窗
+    # Launch with pythonw so autostart never flashes a console at boot,
+    # 一律用 pythonw 启动，自启时不会开机闪黑窗 ——
+    # even if the build currently running is the console one.
+    # 哪怕当前跑的是 console 版也一样。
 
     pyw = Path(
         sys.executable
@@ -312,10 +302,8 @@ from ui import i18n
 
 
 
-# ==================================================
-# API Key 连接测试线程
-# 网络请求放后台，不卡界面
-# ==================================================
+# API Key connection test thread — the network call stays off the UI thread.
+# API Key 连接测试线程：网络请求放后台，不卡界面。
 
 class KeyTestWorker(QThread):
 
@@ -363,13 +351,13 @@ class SettingsWindow(QWidget):
 
     settings_saved = Signal()
 
-    # 语言变了：
-    # 主窗口收到后当场整体换文字
+    # Language changed: the main window retranslates everything on the spot.
+    # 语言变了：主窗口收到后当场整体换文字。
 
     language_changed = Signal()
 
-    # 配色变了：
-    # 主窗口收到后当场重新上色
+    # Theme changed: the main window recolors everything on the spot.
+    # 配色变了：主窗口收到后当场重新上色。
 
     theme_changed = Signal()
 
@@ -387,8 +375,8 @@ class SettingsWindow(QWidget):
             )
         )
 
-        # 「她记得的事」面板，
-        # 第一次点开时才创建
+        # "Things she remembers" panel — built lazily, on first open.
+        # 「她记得的事」面板，第一次点开时才创建。
 
         self.memory_window = None
 
@@ -416,9 +404,7 @@ class SettingsWindow(QWidget):
 
 
 
-        # =====================
-        # 标题
-        # =====================
+        # Title / 标题
 
         title = QLabel(
             tr("Soulmate 设置")
@@ -452,11 +438,8 @@ class SettingsWindow(QWidget):
 
 
 
-        # =====================
-        # 语言
-        # 放最顶上：
-        # 切换后弹窗一键重启生效
-        # =====================
+        # Language goes on top: switching offers a one-click restart to apply it.
+        # 语言放最顶上：切换后弹窗一键重启生效。
 
         layout.addWidget(
             QLabel(tr("语言"))
@@ -491,9 +474,7 @@ class SettingsWindow(QWidget):
 
 
 
-        # =====================
-        # 头像
-        # =====================
+        # Avatar / 头像
 
 
         self.avatar_label = QLabel()
@@ -530,9 +511,7 @@ class SettingsWindow(QWidget):
 
 
 
-        # =====================
-        # 名字
-        # =====================
+        # Name / 名字
 
 
         name_title = QLabel(
@@ -561,9 +540,7 @@ class SettingsWindow(QWidget):
 
 
 
-        # =====================
-        # 性格
-        # =====================
+        # Personality / 性格
 
 
         personality_title = QLabel(
@@ -582,9 +559,10 @@ class SettingsWindow(QWidget):
 
         )
 
-        # 填了就是整块替换，不是追加。
-        # 这句话得贴在框上，
-        # 写在文档里没人看。
+        # Filling this box replaces the whole block, it does not append —
+        # 填了就是整块替换，不是追加 ——
+        # so the warning sits right on the box; nobody reads docs.
+        # 这句话得贴在框上，写在文档里没人看。
 
         self.personality_input.setPlaceholderText(
 
@@ -604,8 +582,8 @@ class SettingsWindow(QWidget):
         )
 
 
-        # 当前生效的是默认的还是你填的，
-        # 以及被换掉的那块原本写了什么
+        # Shows whether the default or your text is live, and what got replaced.
+        # 当前生效的是默认的还是你填的，以及被换掉的那块原本写了什么。
 
         self.personality_hint = QLabel()
 
@@ -621,12 +599,11 @@ class SettingsWindow(QWidget):
         )
 
 
-        # 一键恢复出厂。
-        #
-        # 提示里把出厂原文摆出来了，
-        # 人看到的第一反应是复制回去 ——
-        # 但那只是把文本钉死成自定义，
-        # 以后我们再调出厂设定就跟不上了。
+        # The hint prints the factory text, and the first instinct is to copy it back —
+        # 提示里把出厂原文摆出来了，人看到的第一反应是复制回去 ——
+        # but that only pins it as a custom override, so later default tweaks never land.
+        # 但那只是把文本钉死成自定义，以后我们再调出厂设定就跟不上了。
+        # So there has to be a button that makes "reset" actually reset.
         # 得有个按钮让"恢复"真的恢复。
 
         self.personality_reset = QPushButton(
@@ -649,9 +626,8 @@ class SettingsWindow(QWidget):
         self._refresh_personality_hint()
 
 
-        # =====================
-        # 来历：家乡/现居/身份
-        # =====================
+        # Background: hometown / current city / occupation.
+        # 来历：家乡 / 现居 / 身份。
 
         layout.addWidget(
             QLabel(tr("她的家乡"))
@@ -733,10 +709,8 @@ class SettingsWindow(QWidget):
 
 
 
-        # =====================
-        # 模型服务
-        #（服务商 + Key + 三个模型）
-        # =====================
+        # Model service: provider + Key + the three model fields.
+        # 模型服务：服务商 + Key + 三个模型。
 
 
         svc_title = QLabel(
@@ -749,9 +723,10 @@ class SettingsWindow(QWidget):
         )
 
 
-        # 服务商预设：
-        # 选中即填地址和示例模型，
-        # 填完仍可手改任何一栏
+        # Provider presets: selecting one fills the base URL and sample models,
+        # 服务商预设：选中即填地址和示例模型，
+        # every field stays hand-editable afterwards.
+        # 填完仍可手改任何一栏。
 
         layout.addWidget(
             QLabel(tr("服务商"))
@@ -776,7 +751,7 @@ class SettingsWindow(QWidget):
         )
 
 
-        # 接口地址
+        # Base URL / 接口地址
 
         layout.addWidget(
             QLabel(tr("接口地址（Base URL）"))
@@ -794,7 +769,8 @@ class SettingsWindow(QWidget):
         )
 
 
-        # 三个角色各用什么模型
+        # Which model each of the three roles uses.
+        # 三个角色各用什么模型。
 
         layout.addWidget(
             QLabel(tr("理解模型（每句话前读心）"))
@@ -861,7 +837,7 @@ class SettingsWindow(QWidget):
         )
 
 
-        # API Key
+        # API Key section / API Key 一栏
 
         layout.addWidget(
             QLabel(tr("API Key"))
@@ -871,7 +847,8 @@ class SettingsWindow(QWidget):
         self.key_input = QLineEdit()
 
 
-        # 密码样式显示，不暴露明文
+        # Password echo mode — never show the key in clear text.
+        # 密码样式显示，不暴露明文。
 
         self.key_input.setEchoMode(
             QLineEdit.Password
@@ -883,7 +860,8 @@ class SettingsWindow(QWidget):
         )
 
 
-        # 已保存过就回填
+        # Fill back in if one was saved before.
+        # 已保存过就回填。
 
         saved_key = (
             self._load_saved_key()
@@ -896,7 +874,8 @@ class SettingsWindow(QWidget):
             )
 
 
-        # Key 输入框 + 测试连接按钮 一行
+        # Key field and test button on one row.
+        # Key 输入框 + 测试连接按钮 一行。
 
         key_row = QHBoxLayout()
 
@@ -937,7 +916,7 @@ class SettingsWindow(QWidget):
         )
 
 
-        # 测试状态提示
+        # Test status line / 测试状态提示
 
         self.key_status = QLabel(
             ""
@@ -966,15 +945,13 @@ class SettingsWindow(QWidget):
         self.key_tester = None
 
 
-        # 已保存过的配置回填，
-        # 并把服务商下拉对上号
+        # Fill back saved config and line the provider dropdown up with it.
+        # 已保存过的配置回填，并把服务商下拉对上号。
 
         self._fill_saved_llm_settings()
 
 
-        # =====================
-        # 开机自启
-        # =====================
+        # Autostart / 开机自启
 
         self.autostart_check = QCheckBox(
             "开机自动启动"
@@ -989,7 +966,8 @@ class SettingsWindow(QWidget):
 
         else:
 
-            # 非 Windows 或找不到启动器
+            # Not Windows, or no launcher found.
+            # 非 Windows 或找不到启动器。
 
             self.autostart_check.setEnabled(
                 False
@@ -1006,11 +984,8 @@ class SettingsWindow(QWidget):
 
 
 
-        # =====================
-        # 配色
-        # 两套是同一套绿的明度反转，
-        # 不是两种互不相干的风格
-        # =====================
+        # The two themes are one green pair, light inverted — not two unrelated looks.
+        # 两套是同一套绿的明度反转，不是两种互不相干的风格。
 
         layout.addWidget(
             QLabel(tr("配色"))
@@ -1074,11 +1049,10 @@ class SettingsWindow(QWidget):
 
 
 
-        # =====================
-        # 她记得的事
-        # 记错了可以在这里删掉，
-        # 这是目前唯一的纠错通道
-        # =====================
+        # "Things she remembers" is the one place a wrong memory can be deleted —
+        # 「她记得的事」：记错了可以在这里删掉 ——
+        # today that is the only way to correct her.
+        # 这是目前唯一的纠错通道。
 
         self.memory_button = QPushButton(
             tr("她记得的事")
@@ -1098,9 +1072,7 @@ class SettingsWindow(QWidget):
 
 
 
-        # =====================
-        # 保存
-        # =====================
+        # Save / 保存
 
 
         save_button = QPushButton(
@@ -1119,10 +1091,10 @@ class SettingsWindow(QWidget):
 
 
 
-        # 内容比窗口高（实测需要 1012px，
-        # 窗口只有 878px）。
-        # 不套滚动区的话
-        # 「保存设置」按钮根本够不着。
+        # Content is taller than the window (1012px needed, 878px available) —
+        # 内容比窗口高（实测需要 1012px，窗口只有 878px）——
+        # without a scroll area the Save button is simply unreachable.
+        # 不套滚动区的话「保存设置」按钮根本够不着。
 
         container = QWidget()
 
@@ -1163,29 +1135,27 @@ class SettingsWindow(QWidget):
 
 
 
-        # 样式统一走 _apply_style，
-        # 不再写死在构造里
+        # Styling lives in _apply_style, not hardcoded in the constructor.
+        # 样式统一走 _apply_style，不再写死在构造里。
 
         self._apply_style()
 
 
 
-    # =====================
-    # 性格那一栏：
-    # 让人看得见自己正在替换什么
-    #
-    # 这个框填了就是整块覆盖
-    # personality.py 里写好的默认设定，
+    # The personality field has to show what you are replacing.
+    # 性格那一栏：让人看得见自己正在替换什么。
+    # Anything typed here wholesale overwrites the defaults in personality.py,
+    # 这个框填了就是整块覆盖 personality.py 里写好的默认设定，
+    # and the old UI never said a word about that.
     # 原来界面上一个字都没提。
-    #
-    # 代价是真实发生过的：
-    # 一句顺手填的
-    # 「幽默、活泼、喜欢鼓励用户」
-    # 把默认里唯一那句
-    # 「不认同的时候会温和地说出来」
-    # 悄悄换掉了 ——
+    # The cost really happened once: someone casually typed
+    # 代价是真实发生过的：一句顺手填的
+    # "humorous, lively, likes encouraging the user", which quietly swapped out
+    # 「幽默、活泼、喜欢鼓励用户」把默认里唯一那句
+    # the only line in the defaults reading "speaks up gently when she disagrees" —
+    # 「不认同的时候会温和地说出来」悄悄换掉了 ——
+    # and that line was her entire spine at the time.
     # 而那句正是她当时全部的脊梁。
-    # =====================
 
     def _refresh_personality_hint(self):
 
@@ -1233,15 +1203,16 @@ class SettingsWindow(QWidget):
         )
 
 
+        # Edited is edited — flag it in red.
         # 改了就是改了，用红字。
-        # 出厂那套性格里
-        # 拧巴的地方是最贵的部分 ——
-        # 不敢起冲突、不会求助、
-        # 对被需要上瘾、怕自己无聊。
-        # 这几条全在让她更不好用，
-        # 也全是她像个活人的地方。
-        # 换成一句「活泼、喜欢鼓励用户」
-        # 她立刻就听话了，也立刻就不是她了。
+        # The factory personality's twisted bits are its most valuable part:
+        # 出厂性格里最贵的就是那些拧巴的地方：
+        # can't fight, can't ask for help, hooked on being needed, scared of being boring.
+        # 不敢起冲突、不会求助、对被需要上瘾、怕自己无聊。
+        # That makes her harder to use, and is exactly what makes her feel alive.
+        # 这让她更不好用，也全是她像个活人的地方。
+        # Swap in "lively, likes encouraging the user": she obeys at once, and stops being her.
+        # 换成「活泼、喜欢鼓励用户」，她立刻听话，也立刻就不是她了。
 
         self.personality_hint.setStyleSheet(
             "font-size:12px;"
@@ -1263,13 +1234,10 @@ class SettingsWindow(QWidget):
         )
 
 
-    # =====================
-    # 恢复出厂性格：
-    # 清空，而不是把原文抄回去。
-    #
-    # 抄回去 = 钉死成自定义，
-    # 我们以后再调出厂设定就跟不上了。
-    # =====================
+    # Reset factory personality: clear the box, don't copy the text back.
+    # 恢复出厂性格：清空，而不是把原文抄回去。
+    # Copying back pins it as a custom override, so later default tweaks never land.
+    # 抄回去 = 钉死成自定义，我们以后再调出厂设定就跟不上了。
 
     def _reset_personality(self):
 
@@ -1278,13 +1246,10 @@ class SettingsWindow(QWidget):
         )
 
 
-    # =====================
-    # 样式跟随主题
-    #
-    # 原来整块颜色写死成浅色，
-    # 深色主题下打开设置
-    # 是一盏白炽灯
-    # =====================
+    # Style follows the theme. The colors used to be hardcoded light, which made
+    # 样式跟随主题。原来整块颜色写死成浅色，
+    # opening settings under a dark theme feel like a light bulb in the face.
+    # 深色主题下打开设置是一盏白炽灯。
 
     def _apply_style(self):
 
@@ -1433,15 +1398,12 @@ class SettingsWindow(QWidget):
         )
 
 
-    # =====================
-    # 切换配色
-    #
-    # 各窗口在构造时就生成了样式表，
-    # 已经建好的气泡不会自己换色。
-    # 这里只保证设置页本身立刻跟上，
-    # 其余窗口提示重启。
-    # 硬撑着半新半旧更难受。
-    # =====================
+    # Theme switch. Every window builds its stylesheet at construction time, so
+    # 切换配色。各窗口在构造时就生成了样式表，
+    # bubbles already on screen won't recolor themselves. Only the settings page
+    # 已经建好的气泡不会自己换色。这里只保证设置页本身立刻跟上，
+    # updates in place; the rest are told to restart. Half-updated looks worse.
+    # 其余窗口提示重启。硬撑着半新半旧更难受。
 
     def _pick_theme(self, name):
 
@@ -1468,8 +1430,8 @@ class SettingsWindow(QWidget):
 
         self.theme_hint.setText("")
 
-        # 无需提示：
-        # 界面已经当场全部换新
+        # No hint needed: the UI already swapped over in place.
+        # 无需提示：界面已经当场全部换新。
 
         self.theme_hint.setStyleSheet(
             f"font-size:12px;"
@@ -1478,10 +1440,8 @@ class SettingsWindow(QWidget):
         )
 
 
-    # =====================
-    # 每次打开重新取一次主题，
-    # 免得别处换过了这里还显示旧的
-    # =====================
+    # Re-read the theme on every open, so a change made elsewhere shows up here.
+    # 每次打开重新取一次主题，免得别处换过了这里还显示旧的。
 
     def showEvent(self, event):
 
@@ -1506,9 +1466,7 @@ class SettingsWindow(QWidget):
 
 
 
-    # =====================
-    # 加载头像
-    # =====================
+    # Load avatar / 加载头像
 
 
     def load_avatar(self):
@@ -1545,9 +1503,7 @@ class SettingsWindow(QWidget):
 
 
 
-    # =====================
-    # 更换头像
-    # =====================
+    # Change avatar / 更换头像
 
 
     def change_avatar(self):
@@ -1570,8 +1526,8 @@ class SettingsWindow(QWidget):
         if file:
 
 
-            # 头像存到用户数据目录，
-            # 打包后程序目录是只读的
+            # Avatars go in the user data dir — the program dir is read-only once packaged.
+            # 头像存到用户数据目录，打包后程序目录是只读的。
 
             ext = os.path.splitext(
                 file
@@ -1601,12 +1557,10 @@ class SettingsWindow(QWidget):
 
 
 
-    # =====================
-    # 测试 API Key 连接
-    # =====================
+    # Test the API Key connection / 测试 API Key 连接
 
-    # 提示文字的配色，
-    # 别再写死成只看得清浅底的红
+    # Status text colors come from the theme — the old hardcoded red only read well on light.
+    # 提示文字的配色从主题取，别再写死成只看得清浅底的红。
 
     def _status_style(self, kind):
 
@@ -1630,12 +1584,10 @@ class SettingsWindow(QWidget):
 
 
 
-    # =====================
-    # 语言切换：
-    # 保存后问一句要不要
-    # 立刻重启应用，
-    # 重启后整个界面换语言
-    # =====================
+    # Language switch: after saving, ask whether to restart the app right away —
+    # 语言切换：保存后问一句要不要立刻重启应用，
+    # the whole UI comes back in the new language.
+    # 重启后整个界面换语言。
 
     def _pick_language(self, index):
 
@@ -1655,20 +1607,20 @@ class SettingsWindow(QWidget):
             return
 
 
-        # 存档 + 广播：
-        # 整个界面由主窗口当场换文字，
-        # 这个设置窗口会被整体重建
+        # Store it, then broadcast: the main window retranslates everything live,
+        # 存档 + 广播：整个界面由主窗口当场换文字，
+        # and this settings window gets rebuilt from scratch.
+        # 这个设置窗口会被整体重建。
 
         i18n.set_language(code)
 
         self.language_changed.emit()
 
 
-    # =====================
-    # 服务商预设：
-    # 选中即填，填完仍可手改。
-    # 「自定义」不动现有输入
-    # =====================
+    # Provider presets: selecting one fills the fields, all still hand-editable.
+    # 服务商预设：选中即填，填完仍可手改。
+    # "Custom" leaves the current input alone.
+    # 「自定义」不动现有输入。
 
     def _pick_provider(self, name):
 
@@ -1701,12 +1653,10 @@ class SettingsWindow(QWidget):
 
 
 
-    # =====================
-    # 把保存过的配置填回输入框，
-    # 服务商下拉对上号；
-    # 对不上就选「自定义」。
-    # 对号过程别触发预设覆盖
-    # =====================
+    # Fill saved config back into the fields and match the provider dropdown;
+    # 把保存过的配置填回输入框，服务商下拉对上号；
+    # no match means "custom". Matching must not trigger a preset overwrite.
+    # 对不上就选「自定义」。对号过程别触发预设覆盖。
 
     def _fill_saved_llm_settings(self):
 
@@ -1747,10 +1697,10 @@ class SettingsWindow(QWidget):
                 )
 
 
-        # 地址对得上哪个预设就显示哪个；
-        # 没存过地址就留在默认服务商上
-        #（下面会按它预填），
-        # 存过但对不上才是「自定义」
+        # Show whichever preset the URL matches; no saved URL keeps the default
+        # 地址对得上哪个预设就显示哪个；没存过地址就留在默认服务商上
+        # provider (prefilled below). Saved but unmatched is "custom".
+        #（下面会按它预填），存过但对不上才是「自定义」。
 
         matched = (
             self.provider_combo
@@ -1791,9 +1741,8 @@ class SettingsWindow(QWidget):
         )
 
 
-        # 什么都没配过：
-        # 预填默认服务商，
-        # Key 还是要他自己填
+        # Nothing configured yet: prefill the default provider. The Key is still on them.
+        # 什么都没配过：预填默认服务商，Key 还是要他自己填。
 
         if not base and not any(
             saved.get(k)
@@ -1897,8 +1846,8 @@ class SettingsWindow(QWidget):
             True
         )
 
-        # 错误信息太长就截断，
-        # 常见是 Key 无效或网络不通
+        # Truncate long errors — usually an invalid Key or no network.
+        # 错误信息太长就截断，常见是 Key 无效或网络不通。
 
         short = error.replace(
             "\n", " "
@@ -1913,17 +1862,16 @@ class SettingsWindow(QWidget):
         )
 
 
-    # =====================
-    # 保存
-    # =====================
+    # Save / 保存
 
 
     def save(self):
 
 
-        # 每一步独立容错：
-        # 任何一步失败都明确告诉用户，
-        # 不能静默吞掉导致"以为保存了"
+        # Each step fails on its own: any step that fails has to tell the user,
+        # 每一步独立容错：任何一步失败都明确告诉用户，
+        # never get swallowed into a silent "looks saved to me".
+        # 不能静默吞掉导致"以为保存了"。
 
         errors = []
 
@@ -1990,9 +1938,10 @@ class SettingsWindow(QWidget):
             )
 
 
-        # 模型服务配置：
-        # 地址/模型名明文存 config，
-        # 清空的字段回到出厂默认
+        # Model service config: base URL and model names go to config in clear text,
+        # 模型服务配置：地址/模型名明文存 config，
+        # and an emptied field falls back to the factory default.
+        # 清空的字段回到出厂默认。
 
         base = (
             self.base_input.text()
@@ -2042,7 +1991,8 @@ class SettingsWindow(QWidget):
             )
 
 
-        # API Key 单独加密存配置文件
+        # API Key is stored encrypted, on its own.
+        # API Key 单独加密存配置文件。
 
         key = self.key_input.text().strip()
 
@@ -2052,8 +2002,8 @@ class SettingsWindow(QWidget):
 
                 self._save_key(key)
 
-                # 写完立刻读回来核对，
-                # 确保真的落盘了
+                # Read it straight back after writing to confirm it really hit disk.
+                # 写完立刻读回来核对，确保真的落盘了。
 
                 if (
                     self._load_saved_key()
@@ -2074,7 +2024,8 @@ class SettingsWindow(QWidget):
                 )
 
 
-        # 开机自启（仅打包版可用）
+        # Autostart (packaged build only).
+        # 开机自启（仅打包版可用）。
 
         if autostart_supported():
 
@@ -2127,9 +2078,7 @@ class SettingsWindow(QWidget):
 
 
 
-    # =====================
-    # 打开「她记得的事」
-    # =====================
+    # Open "Things she remembers" / 打开「她记得的事」
 
     def open_memory(self):
 
@@ -2164,9 +2113,7 @@ class SettingsWindow(QWidget):
             )
 
 
-    # =====================
-    # API Key 的读写
-    # =====================
+    # API Key read/write / API Key 的读写
 
     @staticmethod
     def _config_file():
@@ -2176,15 +2123,15 @@ class SettingsWindow(QWidget):
 
     def _load_saved_key(self):
 
-        # DPAPI 密文读取，
-        # 旧版明文自动迁移
+        # Reads the DPAPI ciphertext; old plaintext versions migrate automatically.
+        # DPAPI 密文读取，旧版明文自动迁移。
 
         return load_api_key()
 
 
     def _save_key(self, key):
 
-        # DPAPI 加密保存，
-        # 保留 onboarded 等其他字段
+        # Saves encrypted with DPAPI, keeping other fields like onboarded.
+        # DPAPI 加密保存，保留 onboarded 等其他字段。
 
         save_api_key(key)

@@ -1,16 +1,16 @@
 # paths.py
 #
+# Data paths
 # 数据路径管理
 #
-# 打包成 exe 后，程序启动目录不确定，
-# 所有用户数据（记忆、关系、人格……）
-# 统一写到系统用户目录：
-#   Windows: %APPDATA%\Soulmate\
-#   其他:    ~/.soulmate/
-# 可用环境变量 ECHO_DATA_DIR 覆盖
-# （开发调试用；名字是历史遗留，懒得全改）
-#
-# 首次启动时自动把旧版相对路径下的数据迁移过来
+# Packaged as exe the launch dir is unpredictable, so all user data (memory,
+# relationship, personality...) goes to the system user dir, not the launch dir.
+# 打包成 exe 后启动目录不确定，用户数据（记忆、关系、人格……）统一写到系统用户目录。
+# Windows: %APPDATA%\Soulmate\ ; elsewhere: ~/.soulmate/ ; ECHO_DATA_DIR overrides.
+# Windows 是 %APPDATA%\Soulmate\；其他系统 ~/.soulmate/；可用 ECHO_DATA_DIR 覆盖
+# （开发调试用；名字是历史遗留，懒得全改）。
+# Old data under the legacy relative paths is migrated on first launch.
+# 首次启动时自动把旧版相对路径下的数据迁移过来。
 
 import os
 import sys
@@ -21,8 +21,8 @@ from pathlib import Path
 
 APP_NAME = "Soulmate"
 
-# 便携模式的数据文件夹名
-# （放在 exe 旁边，跟着U盘走）
+# Portable-mode data folder name (sits next to the exe, travels on the USB stick)
+# 便携模式的数据文件夹名（放在 exe 旁边，跟着U盘走）
 
 PORTABLE_DIR = "SoulmateData"
 
@@ -104,12 +104,12 @@ def data_dir():
 
     else:
 
-        # =========================
-        # 便携模式：
-        # exe 旁边已有 SoulmateData，
-        # 或 exe 在U盘等可移动磁盘上，
-        # 数据跟着程序走，换电脑不丢
-        # =========================
+        # Portable mode: SoulmateData already sits next to the exe, or the exe
+        # runs from a removable drive like a USB stick. Either way the data
+        # follows the program instead of the machine.
+        # 便携模式：exe 旁边已有 SoulmateData，或者 exe 在U盘等可移动磁盘上，
+        # 这两种情况数据都是跟着程序走，而不是跟着机器走，
+        # 换电脑不丢。
 
         base = None
 
@@ -138,13 +138,12 @@ def data_dir():
         ):
 
             # =========================
-            # 源码运行的同一条规矩：
-            # 项目目录旁边躺着 SoulmateData
-            # 就直接用它——
-            # 快捷方式和开机自启
-            # 不用再设环境变量，
-            # 也不会把数据写散到
-            # %APPDATA% 里
+            # Running from source follows the same rule: a SoulmateData sitting next
+            # to the project is used directly, so shortcuts and autostart need no
+            # env var, and nothing gets scattered into %APPDATA%.
+            # 源码运行是同一条规矩：项目目录旁边躺着 SoulmateData 就直接用它，
+            # 这样快捷方式和开机自启都不用再设环境变量，
+            # 数据也不会写散到 %APPDATA% 里。
             # =========================
 
             proj = (

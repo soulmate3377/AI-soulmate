@@ -47,8 +47,8 @@ class ActionExecutor:
 
 
         # =====================
+        # Proactive send
         # 主动发送消息
-        # =====================
 
         if action_type == "send_message":
 
@@ -60,8 +60,8 @@ class ActionExecutor:
 
             )
 
-            # 决策层只给出"该不该联系"，
-            # 没给内容时由行动层现场生成
+            # Decision layer only says whether; this layer writes the text
+            # 决策层只给出“该不该联系”，没给内容时由行动层现场生成
 
             if not content and self.llm:
 
@@ -83,7 +83,7 @@ class ActionExecutor:
 
             }
 
-        # 明确不联系
+        # Explicit no-contact / 明确不联系
 
         if action_type == "none":
 
@@ -93,8 +93,8 @@ class ActionExecutor:
 
 
     # =====================
+    # Build the proactive message text
     # 生成主动消息内容
-    # =====================
 
     def _generate_message(self, data=None):
 

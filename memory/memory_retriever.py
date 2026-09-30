@@ -30,9 +30,8 @@ class MemoryRetriever:
 
 
 
-        # =====================
+        # 1. vector semantic search
         # 1. 向量语义搜索
-        # =====================
 
         try:
 
@@ -64,9 +63,8 @@ class MemoryRetriever:
 
 
 
-        # =====================
+        # 2. add what we know about the user
         # 2. 用户画像补充
-        # =====================
 
         try:
 

@@ -1,19 +1,19 @@
 # storage.py
 #
-# 全项目统一的本地存储：
+# Local storage shared by the whole project
+# 全项目统一的本地存储
 #
-# 1. JSON 原子读写
-#    先写临时文件再替换，
-#    中途断电/崩溃不会留下半个文件
+# 1. Atomic JSON I/O: write a temp file then replace it, so a power cut or a
+#    crash never leaves half a file behind.
+# 1. JSON 原子读写：先写临时文件再替换，中途断电/崩溃不会留下半个文件。
 #
-# 2. API Key 的 DPAPI 加密
-#    Windows 按当前用户加密，
-#    不需要额外密码；
-#    文件拷到别的电脑/别的用户
-#    解不开，换机时在设置里重填即可
+# 2. DPAPI encryption for the API key: Windows encrypts per user, no extra
+#    password; copied to another machine or user it won't decrypt, just re-enter.
+# 2. API Key 的 DPAPI 加密：Windows 按当前用户加密，不需要额外密码；
+#    文件拷到别的电脑/别的用户解不开，换机时在设置里重填即可。
 #
-# 3. config.json 的统一入口
-#    合并式读写，不覆盖无关字段
+# 3. One entry point for config.json: merge-style writes keep unrelated fields.
+# 3. config.json 的统一入口：合并式读写，不覆盖无关字段。
 
 import json
 import os
@@ -23,8 +23,8 @@ from core.paths import data_dir
 
 
 # ==================================================
+# JSON atomic read/write
 # JSON 原子读写
-# ==================================================
 
 def read_json(path, default=None):
 
@@ -71,8 +71,8 @@ def write_json(path, data):
 
 
 # ==================================================
+# DPAPI encrypt/decrypt (Windows)
 # DPAPI 加解密（Windows）
-# ==================================================
 
 def _dpapi_available():
 
@@ -245,14 +245,14 @@ def unprotect_text(blob_b64):
 
 
 # ==================================================
+# Provider settings (base_url + three model names)
 # 服务商配置（base_url + 三个模型名）
-# --------------------------------------------------
-# 明文存 config.json：
-# 模型名和接口地址不敏感，
-# 只有 Key 走加密
+# Plaintext in config.json: the model names and endpoint aren't sensitive,
+# only the key is encrypted.
+# 明文存 config.json：模型名和接口地址不敏感，只有 Key 走加密
 # ==================================================
 
-# 允许落盘的字段白名单
+# Fields allowed to be persisted / 允许落盘的字段白名单
 
 _LLM_FIELDS = (
     "api_base",
@@ -340,8 +340,8 @@ def save_llm_settings(
 
 
 # ==================================================
+# config.json entry point
 # config.json 统一入口
-# ==================================================
 
 def _config_file():
 
@@ -363,8 +363,8 @@ def save_config(cfg):
 
 
 # ==================================================
+# API key storage
 # API Key 存取
-# ==================================================
 
 def save_api_key(key):
 
@@ -387,7 +387,7 @@ def save_api_key(key):
 
     else:
 
-        # 非 Windows 等环境退路
+        # Fallback for non-Windows / 非 Windows 等环境退路
 
         cfg["api_key"] = key
 
@@ -414,8 +414,8 @@ def load_api_key():
 
             return key
 
-        # 解不开通常是换了电脑/用户，
-        # 密文已失效，清掉让用户重填
+        # Usually another machine or user, so the blob is dead: drop it and let the user re-enter.
+        # 解不开通常是换了电脑/用户，密文已失效，清掉让用户重填。
 
         cfg.pop(
             "api_key_protected", None
@@ -427,7 +427,7 @@ def load_api_key():
 
     if legacy:
 
-        # 旧版明文 → 迁移成密文
+        # Legacy plaintext, migrate it to encrypted / 旧版明文 → 迁移成密文
 
         save_api_key(legacy)
 

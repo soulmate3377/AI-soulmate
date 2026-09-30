@@ -1,15 +1,15 @@
 # core/presence.py
 #
+# Her "now": what the top bar should say she's up to.
 # 她的「当下」——顶栏那句状态该说什么。
+# Two paths, because weather needs a network call: activity_text()
+# is instant and safe on the UI thread, full_text() is not.
+# 天气要发网络请求，所以拆成快慢两条路：activity_text() 秒出、
+# 界面线程随便调；full_text() 会联网，只能丢给子线程。
 #
-# 拆成快慢两条路，是因为天气要发网络请求：
-#   activity_text() 秒出，界面线程随便调
-#   full_text()     会联网，只能丢给子线程
-#
-# 顶栏先立刻显示她在做什么，
-# 天气查到了再补上去。
-# 反过来做的话，网络一慢
-# 整个界面会卡住十几秒。
+# Show her activity first, append the weather when it lands; the
+# reverse order would freeze the UI for ten-odd seconds.
+# 先显示她在做什么，天气查到再补上；反过来网络一慢会卡十几秒。
 
 from core.activity import ActivityEngine
 

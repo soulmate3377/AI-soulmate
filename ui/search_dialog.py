@@ -1,16 +1,12 @@
 # ui/search_dialog.py
-#
-# 聊天记录搜索（Ctrl+F）。
-#
-# 每敲一个字现搜一遍：
-# 聊天记录就一个本地 json，
-# 全量过滤比建索引简单，
-# 也永远和最新记录一致。
-#
-# 双击某条结果跳回聊天里
-# 对应的气泡。比当前界面
-# 加载的 80 条更早的消息
-# 跳不过去，提示改用导出。
+# Chat history search (Ctrl+F) re-runs on every keystroke: the history is one
+# local json, so filtering it whole beats an index and always matches the newest
+# records.
+# 聊天记录搜索（Ctrl+F）。每敲一个字现搜一遍：记录就一个本地 json，
+# 全量过滤比建索引简单，也永远和最新记录一致。
+# Double-click a hit to jump to that bubble. Anything older than the 80 the
+# current view loaded can't be jumped to, so it points at export instead.
+# 双击某条结果跳回聊天里对应的气泡；比当前界面加载的 80 条更早的消息跳不过去，提示改用导出。
 
 from PySide6.QtWidgets import (
     QDialog,
@@ -27,6 +23,7 @@ from ui.i18n import tr
 from ui.i18n import her_name
 
 
+# role in the record -> label to show
 # 记录里的 role → 显示称呼
 
 def _role_labels():
@@ -50,6 +47,7 @@ class ChatSearchDialog(QDialog):
         super().__init__(parent)
 
 
+        # Pull the whole history on every search
         # 每次搜索现取整份记录
 
         self.fetch_records = (
@@ -57,8 +55,8 @@ class ChatSearchDialog(QDialog):
         )
 
 
-        # 双击结果时回调，
-        # 带上那条完整记录
+        # Callback on double-click, gets the whole record
+        # 双击结果时回调，带上那条完整记录
 
         self.on_jump = on_jump
 
@@ -186,6 +184,7 @@ class ChatSearchDialog(QDialog):
         ]
 
 
+        # Newest first
         # 最新的排最上面
 
         for r in reversed(hits):

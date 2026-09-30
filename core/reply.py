@@ -1,20 +1,20 @@
 # reply.py
 #
-# 回复消息切分：
-# 让 Soulmate 像真人一样分多条短消息说话
+# Replies get split so Soulmate texts like a person: several short
+# messages instead of one wall of text.
+# 回复消息切分：让 Soulmate 像真人一样分几条短消息说话，
+# 别让一整段话全糊在一个气泡里。
 #
-# 三层策略：
-# 1. 按分隔符切（---、———、*** 都认）
-# 2. 按空行切
-# 3. 都没有但内容太长时，
-#    按句子兜底切，不让一大段
-#    糊在一个气泡里
+# Three layers, first hit wins — separators (--- / ——— / ***),
+# then blank lines, then sentence fallback for a long paragraph.
+# 三层策略：先按分隔符（---、———、*** 都认），再按空行，
+# 最后按句子兜底切。
 
 import re
 
 
-# 分隔符的各种写法
-# （模型不一定乖乖只用 ---）
+# Separators come in several spellings — the model won't stick to ---
+# 分隔符有好几种写法，模型不一定乖乖只用 ---
 
 _SEP = (
     r"(?:-{3,}|—{2,}|–{3,}|\*{3,})"
@@ -27,7 +27,7 @@ _SEP_RE = re.compile(
 )
 
 
-# 句子结尾标点
+# Sentence-ending punctuation / 句子结尾标点
 
 _SENT_END = (
     "。！？!?…~"
@@ -42,7 +42,7 @@ def split_reply(text):
         return []
 
 
-    # 先按分隔符，其次按空行
+    # Separators first, blank lines second / 先按分隔符，其次按空行
 
     parts = _SEP_RE.split(text)
 
@@ -64,9 +64,9 @@ def split_reply(text):
             result.append(part)
 
 
-    # 仍然只有一条，
-    # 但明显是一长段话：
-    # 按句子兜底分组
+    # Still one piece, but clearly a long paragraph — a wall of text
+    # shouldn't land in a single bubble.
+    # 仍然只有一条但明显是一长段话，按句子兜底分组，别糊在一个气泡里。
 
     if (
 
@@ -113,14 +113,14 @@ def _split_by_sentence(text):
     ]
 
 
-    # 两三句不算长，不硬拆
+    # 2~3 sentences isn't long, don't force it / 两三句不算长，不硬拆
 
     if len(sents) <= 2:
 
         return [text]
 
 
-    # 每条 2~3 句，最多拆 3 条
+    # 2~3 sentences per message, max 3 / 每条 2~3 句，最多拆 3 条
 
     n_groups = min(
 

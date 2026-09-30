@@ -32,13 +32,10 @@ from ui import i18n
 from core.storage import load_config
 
 
-# ==================================================
-# 首次启动引导
-#
-# 三步：欢迎 → API Key → 互相认识
-# 完成后在 config.json 写入
+# First-run guide: welcome -> API Key -> getting to know each other, then writes
+# onboarded=True into config.json so it never shows again.
+# 首次启动引导：欢迎 → API Key → 互相认识，完成后在 config.json 写入
 # onboarded=True，不再出现
-# ==================================================
 
 class OnboardingDialog(QDialog):
 
@@ -142,9 +139,8 @@ class OnboardingDialog(QDialog):
         )
 
 
-    # =====================
+    # Page 1: welcome
     # 第 1 页：欢迎
-    # =====================
 
     def _build_welcome(self):
 
@@ -228,9 +224,8 @@ class OnboardingDialog(QDialog):
         return page
 
 
-    # =====================
+    # Page 2: API Key
     # 第 2 页：API Key
-    # =====================
 
     def _build_key_page(self):
 
@@ -271,6 +266,7 @@ class OnboardingDialog(QDialog):
         layout.addWidget(desc)
 
 
+        # Fill in a previously saved key
         # 已保存过就回填
 
         saved = load_api_key()
@@ -409,8 +405,9 @@ class OnboardingDialog(QDialog):
 
             key,
 
-            # 引导页只做默认服务商的检查，
-            # 换服务商在设置页里测
+            # Onboarding only probes the default provider; other providers are
+            # tested in the settings page.
+            # 引导页只做默认服务商的检查，换服务商在设置页里测
 
             PROVIDER_PRESETS[
                 "DeepSeek（默认）"
@@ -467,9 +464,8 @@ class OnboardingDialog(QDialog):
         )
 
 
-    # =====================
+    # Page 3: getting acquainted
     # 第 3 页：认识一下
-    # =====================
 
     def _build_name_page(self):
 
@@ -543,9 +539,8 @@ class OnboardingDialog(QDialog):
         return page
 
 
-    # =====================
+    # Page 4: where she comes from
     # 第 4 页：她的来历
-    # =====================
 
     def _build_life_page(self):
 
@@ -637,17 +632,16 @@ class OnboardingDialog(QDialog):
         return page
 
 
-    # =====================
+    # Finish: persist everything
     # 完成：落盘所有设置
-    # =====================
 
     def _finish(self):
 
         errors = []
 
 
-        # API Key 加密保存 +
-        # 引导完成标记
+        # API Key is encrypted on save, plus the onboarded flag
+        # API Key 加密保存，同时写入引导完成标记
 
         try:
 
@@ -678,6 +672,7 @@ class OnboardingDialog(QDialog):
             )
 
 
+        # My name
         # 我的名字
 
         echo_name = (
@@ -700,8 +695,8 @@ class OnboardingDialog(QDialog):
                 )
 
 
-        # 她的来历：
-        # 家乡 / 现居地 / 身份
+        # Her backstory: hometown / current city / occupation
+        # 她的来历：家乡 / 现居地 / 身份
 
         life_fields = {
 
@@ -740,8 +735,8 @@ class OnboardingDialog(QDialog):
                 )
 
 
-        # 用户的称呼，
-        # 写进长期记忆画像
+        # What to call the user, stored in the long-memory profile
+        # 用户的称呼，写进长期记忆画像
 
         user_name = (
             self.user_name_input.text().strip()
@@ -781,9 +776,8 @@ class OnboardingDialog(QDialog):
 
 
 
-# ==================================================
+# Whether the onboarding should be shown
 # 是否需要显示引导
-# ==================================================
 
 def needs_onboarding():
 

@@ -1,16 +1,13 @@
-# understanding_schema.py
-#
-# 理解端输出的校验层：
-# 模型返回的 JSON 一律先过这里，
-# 不合法的字段被丢弃或修正，
-# 绝不让脏数据流进记忆和 prompt。
-#
-# 这是"记忆写入不再崩"的
-# 根本保证（配合 long_memory 的
-# setdefault 容错是双保险）
+# understanding_schema.py — validation layer for the understanding output.
+# Every JSON the model returns goes through here first: illegal fields are
+# dropped or fixed so dirty data never reaches memory or the prompt.
+# understanding_schema.py —— 理解端输出的校验层：模型返回的 JSON 一律先过
+# 这里，不合法的字段被丢弃或修正，绝不让脏数据流进记忆和 prompt。
+# 这是「记忆写入不再崩」的根本保证（配合 long_memory 的 setdefault 容错，
+# 是双保险）。
 
 
-# 允许的画像类别
+# Allowed profile categories / 允许的画像类别
 
 CATEGORIES = {
     "basic",
@@ -19,7 +16,7 @@ CATEGORIES = {
     "events",
 }
 
-# 允许的记忆操作
+# Allowed memory ops / 允许的记忆操作
 
 ACTIONS = {
     "update_profile",
@@ -27,35 +24,33 @@ ACTIONS = {
     "add_experience",
 }
 
-# 允许的场景判断
+# Allowed scene labels / 允许的场景判断
 
 SCENES = {
     "闲聊", "分享", "倾诉",
     "求助", "玩笑",
 }
 
-# 允许的回复长短
+# Allowed reply lengths / 允许的回复长短
 
 REPLY_LENGTHS = {
     "短", "正常", "多陪几句",
 }
 
-# 允许的关系事件
-# （关系事件化阶段的入口，
-# 先记录，阶段2再消费）
+# Allowed relationship events (entry point of the relationship-event stage —
+# record them now, consume in stage 2)
+# 允许的关系事件（关系事件化阶段的入口，先记录，阶段2再消费）
 
 RELATIONSHIP_EVENTS = {
     "脆弱分享", "好消息", "冲突",
     "和解", "第一次", "感谢",
 }
 
-# 话茬事件时间的合法格式。
-#
-# 模型可以只给日期（"下周一面试"
-# 推不出几点），只给日期的
-# 一律归到当天 18:00 ——
-# 傍晚再问"怎么样"最不容易
-# 问早了。
+# Accepted formats for a follow-up due time. The model may only give a date
+# ("下周一面试" has no hour), so date-only ones land on that day at 18:00 —
+# asking 「怎么样」 in the evening is the least likely to be too early.
+# 话茬事件时间的合法格式。模型可以只给日期（「下周一面试」推不出几点），
+# 只给日期的一律归到当天 18:00——傍晚再问「怎么样」最不容易问早。
 
 _DUE_FORMATS = (
     "%Y-%m-%d %H:%M:%S",
@@ -63,9 +58,9 @@ _DUE_FORMATS = (
     "%Y-%m-%d",
 )
 
-# 允许的情绪/需求
-# （与 EmotionAnalyzer 的输出
-# 形状保持一致，下游不用改）
+# Allowed emotions and needs — same shape as EmotionAnalyzer's output, so
+# downstream callers don't change
+# 允许的情绪/需求（与 EmotionAnalyzer 的输出形状保持一致，下游不用改）
 
 EMOTIONS = {
     "happy", "sad", "tired",
@@ -77,7 +72,7 @@ NEEDS = {
     "advice", "normal",
 }
 
-# 单条字段的最大长度
+# Max length of one field / 单条字段的最大长度
 
 _MAX_VALUE = 80
 
@@ -197,8 +192,8 @@ def _clean_ops(raw_ops):
             _MAX_VALUE
         )
 
-        # update/add_item 必须有键，
-        # add_experience 不需要
+        # update/add_item need a key, add_experience doesn't
+        # update/add_item 必须有键，add_experience 不需要
 
         if (
             action != "add_experience"
@@ -234,7 +229,7 @@ def validate(raw):
         raw = {}
 
 
-    # 情绪（形状对齐旧分析器）
+    # Emotion (shape matches the old analyzer) / 情绪（形状对齐旧分析器）
 
     emotion = raw.get("emotion")
 
@@ -263,7 +258,7 @@ def validate(raw):
         need = "normal"
 
 
-    # 场景
+    # Scene / 场景
 
     scene = raw.get("scene")
 
@@ -272,7 +267,7 @@ def validate(raw):
         scene = "闲聊"
 
 
-    # 回复长短
+    # Reply length / 回复长短
 
     reply_length = raw.get(
         "reply_length"
@@ -285,7 +280,7 @@ def validate(raw):
         reply_length = "正常"
 
 
-    # 关系事件
+    # Relationship event / 关系事件
 
     rel_event = raw.get(
         "relationship_event"
@@ -298,7 +293,7 @@ def validate(raw):
         rel_event = None
 
 
-    # 话茬
+    # Follow-up / 话茬
 
     follow_up = _clean_str(
 
@@ -308,9 +303,9 @@ def validate(raw):
     )
 
 
-    # 话茬里那件事的发生时间。
-    # 没有话茬，时间没有意义，
-    # 一起丢掉。
+    # When the thing in the follow-up happens. With no follow-up the time
+    # means nothing, so both go together.
+    # 话茬里那件事的发生时间。没有话茬，时间没有意义，一起丢掉。
 
     follow_up_due = None
 
@@ -323,12 +318,12 @@ def validate(raw):
         )
 
 
-    # 他在回应什么。
-    #
-    # 「哈哈哈哈」「可以可以」「嗯嗯」这类
-    # 自己不带内容，全靠挂在上一句上才有意思。
-    # 不把它挂上去，她只能瞎猜 ——
-    # 一猜就是编一句听着通顺的话。
+    # What he is responding to. 「哈哈哈哈」「可以可以」「嗯嗯」 carry no content
+    # of their own — they only mean something hung on the previous line.
+    # Without that link she can only guess, and guessing means making up a
+    # line that merely sounds smooth.
+    # 他在回应什么。「哈哈哈哈」「可以可以」「嗯嗯」这类自己不带内容，全靠挂
+    # 在上一句上才有意思。不挂上去，她只能瞎猜——一猜就是编一句听着通顺的话。
 
     reacts_to = _clean_str(
 

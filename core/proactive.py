@@ -21,9 +21,8 @@ class ProactiveConversation:
         self.prompt_builder = prompt_builder
 
 
-    # =====================
-    # 话茬要带上"什么时候提的"
-    # =====================
+    # Follow-ups must carry when they were mentioned
+    # 话茬必须带上"什么时候提的"
 
     @staticmethod
     def _followup_line(item):
@@ -90,10 +89,9 @@ class ProactiveConversation:
         )
 
 
-        # 那件事的发生时间也告诉她：
-        # 到了没、过了多久，
-        # 她才知道该问"准备得怎样"
-        # 还是"结果怎样"
+        # Also pass the event's due time: only with it can she tell
+        # whether to ask "how's the prep" or "how did it go"
+        # 也把事的发生时间给她：她才知道该问"准备得怎样"还是"结果怎样"
 
         due_text = item.get("due") or ""
 
@@ -169,8 +167,8 @@ class ProactiveConversation:
 
         follow_ups=None,
 
-        # 24 小时内她已经用过的意象，
-        # 这一句不许再碰
+        # Imagery she already used within 24h — this line must not reuse it
+        # 24 小时内她已经用过的意象，这一句不许再碰
 
         avoid_imagery=None
 
@@ -178,11 +176,9 @@ class ProactiveConversation:
 
 
 
-        # =====================
-        # 她此刻自己的生活
-        # 主动开口从手边的事开始
-        # 才不像机器人巡检
-        # =====================
+        # Her own life right now — opening from something at hand
+        # is what keeps it from sounding like a bot doing rounds
+        # 她此刻自己的生活：从手边的事开口，才不像机器人巡检
 
         life_lines = []
 
@@ -253,11 +249,8 @@ class ProactiveConversation:
         )
 
 
-        # =====================
-        # 最近聊的内容：
-        # 主动开口要么接话茬，
-        # 要么自然开新话题
-        # =====================
+        # Recent chatter: an opener either picks up a thread or starts a new one
+        # 最近聊的内容：主动开口要么接话茬，要么自然开新话题
 
         dialogue_text = ""
 
@@ -301,11 +294,8 @@ class ProactiveConversation:
                 )
 
 
-        # =====================
-        # 话茬：
-        # 对方之前提过的安排，
-        # 最优先的开口理由
-        # =====================
+        # Follow-ups: plans the user mentioned — the first thing to reach for
+        # 话茬：对方之前提过的安排，最优先的开口理由
 
         followup_text = ""
 
@@ -322,11 +312,8 @@ class ProactiveConversation:
             )
 
 
-        # =====================
-        # 已经用旧的意象
-        # 她最近反复念叨的画面，
-        # 这一句一律不许再提
-        # =====================
+        # Worn-out imagery she kept repeating lately — never reuse it here
+        # 已经用旧的意象：她最近反复念叨的画面，这一句一律不许再提
 
         avoid_text = ""
 
@@ -342,9 +329,8 @@ class ProactiveConversation:
             )
 
 
-        # =====================
-        # 构建主动聊天Prompt
-        # =====================
+        # Build the proactive-chat prompt
+        # 构建主动聊天 Prompt
 
 
         prompt = f"""

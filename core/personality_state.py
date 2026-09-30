@@ -52,7 +52,7 @@ class PersonalityState:
 
 
     # =====================
-    # 保存人格状态
+    # Save the personality state / 保存人格状态
     # =====================
 
     def save(self):
@@ -86,7 +86,7 @@ class PersonalityState:
 
 
     # =====================
-    # 加载人格状态
+    # Load the personality state / 加载人格状态
     # =====================
 
     def load(self):
@@ -110,7 +110,7 @@ class PersonalityState:
 
 
     # =====================
-    # 获取状态
+    # Read the state dict / 获取状态
     # =====================
 
     def get(self):
@@ -123,7 +123,7 @@ class PersonalityState:
 
 
     # =====================
-    # 更新人格参数
+    # Nudge one trait value / 更新人格参数
     # =====================
 
     def update(
@@ -144,7 +144,7 @@ class PersonalityState:
 
 
 
-            # 最大限制
+            # Clamp at 1.0 / 最大限制
 
             if self.state[key] > 1:
 
@@ -153,7 +153,7 @@ class PersonalityState:
 
 
 
-            # 最小限制
+            # Clamp at 0.0 / 最小限制
 
             if self.state[key] < 0:
 

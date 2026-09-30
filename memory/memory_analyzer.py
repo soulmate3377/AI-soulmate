@@ -1,8 +1,8 @@
 # memory_analyzer.py
 #
-# 记忆分析：
-# 优先用大模型判断重要性和分类，
-# 失败或没有模型时退回关键词规则
+# Memory analysis: let the LLM judge importance and category first, fall back
+# to keyword rules when it fails or there is no model.
+# 记忆分析：优先用大模型判断重要性和分类，失败或没有模型时退回关键词规则
 
 import json
 import re
@@ -18,9 +18,8 @@ class MemoryAnalyzer:
 
     def analyze(self, message):
 
-        # =========================
+        # 1. Let the LLM judge first
         # 1. 大模型判断
-        # =========================
 
         if self.llm:
 
@@ -39,9 +38,8 @@ class MemoryAnalyzer:
                 )
 
 
-        # =========================
+        # 2. Keyword rules as the fallback
         # 2. 关键词规则兜底
-        # =========================
 
         return self._rule_analyze(
             message
@@ -49,9 +47,8 @@ class MemoryAnalyzer:
 
 
 
-    # =========================
+    # LLM memory analysis
     # 大模型记忆分析
-    # =========================
 
     def _llm_analyze(self, message):
 
@@ -145,6 +142,7 @@ class MemoryAnalyzer:
         )
 
 
+        # Normalize the "null" string to None
         # null 字符串统一转成 None
 
         for field in (
@@ -175,9 +173,8 @@ class MemoryAnalyzer:
 
 
 
-    # =========================
+    # Keyword-rule fallback
     # 关键词规则兜底
-    # =========================
 
     def _rule_analyze(self, message):
 

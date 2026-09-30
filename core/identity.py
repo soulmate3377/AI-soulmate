@@ -34,9 +34,9 @@ class Identity:
             "avatar":
             "assets/avatar/echo_avatar.png",
 
-            # 留空：让 personality.py 里的
-            # 完整默认设定生效。
-            # 用户在设置里改过才会有值。
+            # Left empty so the full default persona in personality.py
+            # takes over; it only gets a value once the user edits settings.
+            # 故意留空：让 personality.py 的完整默认设定生效；用户改过才会有值。
 
             "personality":"",
 

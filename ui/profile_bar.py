@@ -24,23 +24,20 @@ from core import inclination
 from ui.theme import get_theme
 
 
-# ==================================================
-# 顶栏：她的名字 + 她的当下
-#
-# 原来第二行写死「在线 · 正在陪伴你」。
-# 这句话永远不变，
-# 等于占着 70px 的高度说一句谎：
-# 她其实在上课、在赶稿、在图书馆发呆。
-#
-# 现在换成 ActivityEngine 给的当下，
-# 每半小时自然换一件事，
-# 和她嘴里说的是同一件事。
-# ==================================================
+# Top bar: her name + what she is doing right now.
+# 顶栏：她的名字 + 她的当下。
+# The second line used to be a hardcoded "online · keeping you company" that
+# never changed — 70px of height telling a lie, while she is really in class,
+# rushing a draft or spacing out in the library. It now comes from
+# ActivityEngine, changes every half hour, and matches what she says.
+# 原来第二行写死「在线 · 正在陪伴你」，永远不变，等于占着 70px 说谎：
+# 她其实在上课、在赶稿、在图书馆发呆。现在换成 ActivityEngine 给的当下，
+# 每半小时自然换一件事，和她嘴里说的是同一件事。
 
 class PresenceWorker(QThread):
 
-    # 天气要联网，
-    # 不能堵住界面线程
+    # Weather needs the network, so it must not block the UI thread
+    # 天气要联网，不能堵住界面线程
 
     text_ready = Signal(str)
 
@@ -55,9 +52,8 @@ class PresenceWorker(QThread):
 
         except Exception:
 
-            # 网络不通就退回
-            # 只用活动那一半，
-            # 顶栏不能空着
+            # Network down: fall back to the activity half, the bar can't be blank
+            # 网络不通就退回只用活动那一半，顶栏不能空着
 
             self.text_ready.emit(
                 presence.activity_text()
@@ -73,6 +69,7 @@ class ProfileBar(QWidget):
         super().__init__()
 
 
+        # Identity manager
         # 身份管理
 
         self.identity = Identity()
@@ -110,9 +107,8 @@ class ProfileBar(QWidget):
         )
 
 
-        # =========================
-        # Echo头像
-        # =========================
+        # Echo avatar
+        # Echo 头像
 
         self.avatar_label = QLabel()
 
@@ -139,11 +135,9 @@ class ProfileBar(QWidget):
         )
 
 
-        # =========================
-        # 名字
-        # 状态（上下两行，
-        # 挤在一行读不出重点）
-        # =========================
+        # Name and status stacked on two lines — squeezed into one, the point
+        # gets lost.
+        # 名字和状态分上下两行，挤在一行读不出重点
 
         info_layout = QVBoxLayout()
 
@@ -191,6 +185,7 @@ class ProfileBar(QWidget):
         )
 
 
+        # Status: one dot + one sentence
         # 状态：一个圆点 + 一句话
 
         status_row = QHBoxLayout()
@@ -279,9 +274,8 @@ class ProfileBar(QWidget):
         self.refresh()
 
 
-    # =========================
+    # Status text
     # 状态文字
-    # =========================
 
     def _set_status(self, text):
 
@@ -306,9 +300,8 @@ class ProfileBar(QWidget):
 
 
 
-    # =========================
-    # 刷新Echo身份信息与当下状态
-    # =========================
+    # Refresh Echo's identity info and current state
+    # 刷新 Echo 身份信息与当下状态
 
     def retheme(self):
 
@@ -378,6 +371,7 @@ class ProfileBar(QWidget):
         )
 
 
+        # Update the avatar
         # 更新头像
 
         avatar_path = self.identity.get(
@@ -426,20 +420,18 @@ class ProfileBar(QWidget):
             self._avatar_fallback()
 
 
-        # 当下先立刻显示她在做什么：
-        # 这个不联网，秒出
+        # Show the activity part right away — no network, so it's instant
+        # 当下先立刻显示她在做什么：这个不联网，秒出
 
         text = presence.activity_text()
 
-        # 她不在状态的时候才说出来。
-        # 想聊的日子什么都不加 ——
-        # 真人也是这样，
-        # 你只会注意到他哪天不对劲，
-        # 不会注意到他哪天正常。
-        #
-        # 这条还有个副作用：
-        # 她"话少"和"她失声了"
-        # 现在长得不一样了。
+        # Only mention it when she is off. On talkative days we add nothing —
+        # real people work that way: you notice the off days, never the normal
+        # ones. Side effect: "she's quiet" and "she went mute" no longer look
+        # the same.
+        # 她不在状态的时候才说出来；想聊的日子什么都不加——真人也是这样，
+        # 你只会注意到他哪天不对劲，不会注意到他哪天正常。
+        # 这条还有个副作用：她"话少"和"她失声了"现在长得不一样了。
 
         state = inclination.current()
 
@@ -453,8 +445,8 @@ class ProfileBar(QWidget):
         self._set_status(text)
 
 
-        # 天气慢慢补，
-        # 上一轮还没跑完就不重复起线程
+        # Weather fills in slowly; skip if the last round hasn't finished
+        # 天气慢慢补，上一轮还没跑完就不重复起线程
 
         if self._presence_worker is None:
 
@@ -496,19 +488,14 @@ class ProfileBar(QWidget):
         self._presence_worker = None
 
 
-    # =========================
-    # 退出前收一下天气线程
-    #
-    # 网络慢的时候它能跑十几秒。
-    # 不收的话进程退出时会甩一条
-    # "QThread: Destroyed while
-    #  thread is still running"。
-    #
-    # quit() 打断不了阻塞中的网络请求，
-    # 这里的 wait 只是给它一个
-    # 体面收场的机会，
-    # 超时也照样退出。
-    # =========================
+    # Stop the weather thread before exit. On a slow network it can run for
+    # over ten seconds, and leaving it alone makes the process exit with
+    # "QThread: Destroyed while thread is still running". quit() can't
+    # interrupt a blocked network request, so wait() just gives it a decent
+    # exit; we leave on timeout anyway.
+    # 退出前收一下天气线程。网络慢的时候它能跑十几秒，不收的话进程退出时会甩
+    # 一条 "QThread: Destroyed while thread is still running"。quit() 打断不
+    # 了阻塞中的网络请求，这里的 wait 只是给它一个体面收场的机会，超时也照样退出。
 
     def shutdown(self):
 

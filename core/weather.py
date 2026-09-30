@@ -1,9 +1,9 @@
 # core/weather.py
 #
-# 城市天气查询（Open-Meteo，无需 Key）
-# 供 Soulmate 感知"她住的城市的此刻天气"
-# 带内存缓存，默认一小时刷新一次；
-# 网络失败返回 None，绝不影响聊天
+# City weather via Open-Meteo (no API key) / 城市天气查询（Open-Meteo，无需 Key）
+# Lets her know the weather in the city she lives in. / 供她感知"她住的城市的此刻天气"
+# In-memory cache, one hour TTL; network failure returns None and never breaks the chat
+# 带内存缓存，默认一小时刷新一次；网络失败返回 None，绝不影响聊天
 
 import json
 import time
@@ -25,7 +25,7 @@ _FORECAST_URL = (
 )
 
 
-# WMO weather code → 中文描述
+# WMO weather code → Chinese text / WMO 天气码 → 中文描述
 _CODES = {
     0: "晴",
     1: "大致晴",
@@ -58,7 +58,7 @@ _CODES = {
 }
 
 
-# city -> (timestamp, data)
+# city -> (timestamp, data) / 城市 -> (时间戳, 数据)
 _cache = {}
 
 
@@ -96,7 +96,7 @@ def get_weather(city, ttl=3600):
 
     elif hit:
 
-        # 刷新失败时用旧数据顶着
+        # Refresh failed, fall back to stale value / 刷新失败时用旧数据顶着
 
         return hit[1]
 

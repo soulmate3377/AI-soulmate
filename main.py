@@ -16,12 +16,12 @@ def main():
 
 
     # =========================
-    # 防双开：
-    # 桌面版和手机端服务共用
-    # 同一份 SoulmateData，
-    # 同时开聊天记录会互相
-    # 覆盖丢消息。
-    # 第二个来的直接拒绝启动。
+    # No double launch: desktop and the phone service share one
+    # SoulmateData, and two instances at once overwrite each other's
+    # chat log and swallow messages, so the second one is refused.
+    # 防双开：桌面版和手机端服务共用同一份 SoulmateData，
+    # 同时开会互相覆盖聊天记录、把消息弄丢，所以第二个来的
+    # 直接拒绝启动。
     # =========================
 
     ok, running = lock_acquire(
@@ -52,8 +52,8 @@ def main():
 
 
     # =========================
+    # create the app
     # 创建应用
-    # =========================
 
     app = QApplication(
         sys.argv
@@ -62,27 +62,27 @@ def main():
 
 
     # =========================
+    # global font setup
     # 全局字体设置
-    # =========================
 
     font = QFont()
 
 
-    # 中文字体
+    # Chinese font / 中文字体
 
     font.setFamily(
         "Microsoft YaHei"
     )
 
 
-    # 字号
+    # font size / 字号
 
     font.setPointSize(
         10
     )
 
 
-    # 常规字重，微信风格不用全局加粗
+    # normal weight; WeChat look, no global bold / 常规字重，微信风格不用全局加粗
 
     font.setBold(
         False
@@ -96,19 +96,19 @@ def main():
 
 
     # =========================
-    # 创建Soulmate窗口
-    # =========================
+    # create the Soulmate window
+    # 创建 Soulmate 窗口
 
     window = MainWindow()
 
 
 
     # =========================
-    # 启动顺序：
-    # 第一次用（没选过语言/没引导完）
-    # 先语言选择 + 设置向导，
-    # 全部完成后主界面才出现；
-    # 日常启动直接进主界面。
+    # Startup order: a first run (no language picked yet or
+    # onboarding unfinished) goes through the language picker and
+    # the setup wizard first; only then does the main window show.
+    # 启动顺序：第一次用（没选过语言或没引导完）先走语言选择和
+    # 设置向导，全部完成后主界面才出现；日常启动直接进主界面。
     # =========================
 
     window.start()
@@ -116,8 +116,8 @@ def main():
 
 
     # =========================
+    # enter the event loop
     # 进入事件循环
-    # =========================
 
     sys.exit(
         app.exec()

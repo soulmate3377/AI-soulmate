@@ -1,28 +1,28 @@
 # runlock.py
 #
-# 防双开锁。
-#
+# Single-instance lock
+# 防双开锁
 # ==================================================
+# Why
 # 为什么需要
 # --------------------------------------------------
-# 桌面版和网页端服务共用同一个
-# SoulmateData 目录，两边同时开的话
-# conversations.json 会互相覆盖，
-# 中间那条消息就丢了。
-#
-# 所以：谁先启动谁拿锁，
-# 第二个来的直接拒绝启动。
+# Desktop and the web service share one SoulmateData dir; running both at once
+# makes them overwrite each other's conversations.json and the middle message dies.
+# 桌面版和网页端服务共用同一个 SoulmateData 目录，两边同时开会让
+# conversations.json 互相覆盖，中间那条消息就丢了。
+# Whoever starts first takes the lock, the second one is refused.
+# 所以：谁先启动谁拿锁，第二个来的直接拒绝启动。
 # ==================================================
+# Shape
 # 锁的形态
 # --------------------------------------------------
-# SoulmateData/run.lock，一行文本：
-#     <pid>|<kind>
-# kind 是 desktop / web，
+# SoulmateData/run.lock, one text line: <pid>|<kind>, kind is desktop / web,
+# so the message can say which one is currently running.
+# SoulmateData/run.lock，一行文本 <pid>|<kind>；kind 是 desktop / web，
 # 用于提示「现在开的是哪个」。
-#
-# 锁文件不删除也不可怕：
-# 下次启动会读出 pid，
-# 探测那个进程还活着没有——
+# A lock file left behind is fine: next launch reads the pid and probes whether
+# that process is still alive; dead (crash / force kill) means we take over.
+# 锁文件不删除也不可怕：下次启动会读出 pid，探测那个进程还活着没有，
 # 死了（崩溃 / 被强杀）就接管。
 # ==================================================
 
@@ -35,7 +35,7 @@ from core.paths import data_dir
 
 LOCK_NAME = "run.lock"
 
-# Windows 进程还在运行的退出码
+# Windows exit code while the process is still running / Windows 进程还在运行的退出码
 _STILL_ACTIVE = 259
 
 
@@ -56,7 +56,7 @@ def _pid_alive(pid):
         try:
             import ctypes
 
-            # 只查询，不干扰
+            # Query only, don't disturb the process / 只查询，不干扰
             PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 
             handle = (
@@ -102,8 +102,8 @@ def _pid_alive(pid):
                     )
 
         except Exception:
-            # 探测不了就当活着，
-            # 宁可误拒也不冒险
+            # Can't probe it? Assume it's alive — a false refusal beats a risk.
+            # 探测不了就当活着，宁可误拒也不冒险。
             return True
 
     else:
@@ -186,8 +186,8 @@ def acquire(kind):
                 kind_label(old_kind)
             )
 
-    # 没锁 / 持有者已死 / 是自己：
-    # 写入自己的锁
+    # No lock / holder is dead / it's us: write our own lock.
+    # 没锁 / 持有者已死 / 是自己：写入自己的锁。
 
     try:
         with open(
@@ -199,9 +199,9 @@ def acquire(kind):
                 f"{mine}|{kind}"
             )
     except OSError:
-        # 数据目录不可写：
-        # 拿不到锁就没法防双开，
-        # 但也不能因此不让用
+        # Data dir not writable: no lock means no double-launch guard, but that
+        # still shouldn't block the app.
+        # 数据目录不可写：拿不到锁就没法防双开，但也不能因此不让用。
         return True, None
 
     atexit.register(release)

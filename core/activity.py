@@ -1,13 +1,12 @@
 # core/activity.py
 #
-# Soulmate 自己的日常：
-# 她不是永远等你说话，
-# 她有课要上、有图要画、有班要上。
+# Soulmate's own daily life: she isn't sitting around waiting for you to
+# speak — she has classes, drawings, a shift to get to.
+# Soulmate 自己的日常：她不是永远等你说话，她有课要上、有图要画、有班要上。
 #
-# 同一小时内活动保持稳定，
-# 过一小时自然换下一件事，
-# 这样顶栏状态和她嘴里说的
-# 是同一件事
+# Activity holds still for an hour, then rotates on its own, so the status
+# bar and the thing she says out loud are the same.
+# 同一小时内活动保持稳定，过一小时自然换下一件事，这样顶栏状态和她嘴里说的是同一件事
 
 import random
 
@@ -17,6 +16,7 @@ from datetime import (
 )
 
 
+# Daily schedule per occupation
 # 各身份的日常安排
 _SCHEDULES = {
     "学生": {
@@ -133,9 +133,9 @@ _DEFAULT = {
     ],
 }
 
-# 英文界面用的通用日程池：
-# 不分职业（状态栏一句话而已），
-# 但同样按时段稳定轮换
+# Generic pool for the English UI: no occupation split (it's a one-line
+# status bar anyway), but still stable per time slot
+# 英文界面用的通用日程池：不分职业（状态栏一句话而已），但同样按时段稳定轮换
 
 _EN_SCHEDULES = {
     "morning": [
@@ -205,8 +205,8 @@ class ActivityEngine:
 
     def _pick(self, occupation, moment):
 
-        # 英文界面走通用英文池，
-        # 不查中文职业排期
+        # English UI goes through the generic English pool, no zh schedule lookup
+        # 英文界面走通用英文池，不查中文职业排期
 
         if _ui_language() == "en":
 
@@ -231,10 +231,9 @@ class ActivityEngine:
 
         pool = schedule[_slot(moment.hour)]
 
-        # 种子含日期和半小时段：
-        # 每半小时自然换下一件事，
-        # 同一半小时内任何入口拿到的
-        # 都是同一件事
+        # Seed carries date + half-hour slot: the activity flips every half
+        # hour, and every caller inside one slot gets the same one
+        # 种子含日期和半小时段：每半小时自然换下一件事，同一半小时内任何入口拿到的都是同一件事
 
         half = moment.minute // 30
 
@@ -256,9 +255,8 @@ class ActivityEngine:
 
     def later(self, occupation=""):
 
-        # 待会要做的事：
-        # 取一小时后所在的时段，
-        # 让她能随口说出接下来的安排
+        # Up next: read the slot one hour ahead so she can mention the plan
+        # 待会要做的事：取一小时后所在的时段，让她能随口说出接下来的安排
 
         return self._pick(
 

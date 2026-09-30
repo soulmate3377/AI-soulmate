@@ -8,8 +8,8 @@ class GrowthSystem:
 
     def __init__(self, state=None):
 
-        # 默认自建状态；
-        # 由 Brain 注入时共享同一份人格状态
+        # Own state by default; Brain injects one so both share the same.
+        # 默认自建状态；Brain 注入时和它共用同一份人格状态。
 
         self.state = (
             state or PersonalityState()

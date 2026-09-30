@@ -1,24 +1,21 @@
 # relationship.py
 #
-# 关系系统（事件化）：
+# Event-driven relationship system: not a "N messages and you level up"
+# counter, but three dimensions.
+# 关系系统（事件化）：不是"聊够 N 句就升级"的计数器，而是三个维度。
 #
-# 关系不再是"聊够 N 句就升级"
-# 的计数器，而是三个维度：
+#   familiarity 熟悉度 — brewed slowly by time spent together
+#                       相处时间慢慢泡出来
+#   trust       信任   — pushed by events: vulnerability up, conflict down,
+#                       making up a lot; 被事件推动：脆弱分享涨、冲突跌、和解大涨
+#   bond        纽带   — driven by shared experience: good news, firsts, thanks
+#                       共同经历推动：好消息、第一次、感谢
 #
-#   familiarity 熟悉度——
-#       相处时间慢慢泡出来
-#   trust      信任——
-#       被事件推动：
-#       脆弱分享涨、冲突跌、和解大涨
-#   bond       纽带——
-#       共同经历推动：
-#       好消息、第一次、感谢
+# Every relationship change can say what caused it.
+# 每一次关系变化都能说出"因为发生了什么"。
 #
-# 每一次关系变化都能说出
-# "因为发生了什么"。
-#
-# 旧版 {level, trust, count} 数据
-# 首次打开时自动迁移。
+# Old {level, trust, count} data migrates itself on first open.
+# 旧版 {level, trust, count} 数据首次打开时自动迁移。
 
 from datetime import datetime
 
@@ -26,6 +23,7 @@ from core.paths import resolve_data_file
 from core import storage
 
 
+# How each event pushes the dimensions
 # 每种事件对维度的推动
 
 _EVENT_EFFECTS = {
@@ -53,8 +51,8 @@ _EVENT_EFFECTS = {
 
 }
 
-# 值得记住的"第一次"
-# （写进里程碑，她会记得）
+# Firsts worth remembering — they go into milestones, so she keeps them
+# 值得记住的"第一次"（写进里程碑，她会记得）
 
 _EVENT_MILESTONE = {
 
@@ -86,9 +84,8 @@ class Relationship:
         self._data = self._load()
 
 
-    # ==================================================
+    # Load + migrate old data
     # 读取 + 旧版迁移
-    # ==================================================
 
     def _load(self):
 
@@ -98,8 +95,8 @@ class Relationship:
 
             data = None
 
-        # 旧版字段：level / trust /
-        # interaction_count / status
+        # Legacy fields: level / trust / interaction_count / status
+        # 旧版字段：level / trust / interaction_count / status
 
         if data is None:
 
@@ -147,8 +144,8 @@ class Relationship:
 
         }
 
-        # 阶段一遗留的独立事件日志，
-        # 并进来后删掉
+        # Standalone event log left over from phase one: fold it in, then delete
+        # 阶段一遗留的独立事件日志，并进来后删掉
 
         legacy_log = (
 
@@ -189,7 +186,8 @@ class Relationship:
             self._derive_status(migrated)
         )
 
-        # 迁移或合并过时落盘一次
+        # Persist once if we migrated or merged anything
+        # 迁移或合并过就落盘一次
 
         if (
 
@@ -207,10 +205,10 @@ class Relationship:
         return migrated
 
 
-    # ==================================================
+    # Combined score -> relationship stage
     # 综合分 → 关系阶段
+    # level stays for the interruption check
     # level 字段保留给打扰判断用
-    # ==================================================
 
     @staticmethod
     def _derive_status(data):
@@ -247,10 +245,8 @@ class Relationship:
         )
 
 
-    # ==================================================
-    # 日常互动：
-    # 熟悉度慢慢涨，别的不动
-    # ==================================================
+    # Everyday chat: familiarity creeps up, nothing else moves
+    # 日常互动：熟悉度慢慢涨，别的不动
 
     def interact(self):
 
@@ -272,11 +268,9 @@ class Relationship:
         return self._data
 
 
-    # ==================================================
-    # 关系事件：
-    # 真正的推进器。
-    # 每种事件的第一次会记为里程碑
-    # ==================================================
+    # Relationship events: the real driver. The first of each kind
+    # becomes a milestone.
+    # 关系事件：真正的推进器。每种事件的第一次会记为里程碑
 
     def record_event(
         self, event, message=""
@@ -320,6 +314,7 @@ class Relationship:
 
         })
 
+        # Keep only the last 100 events
         # 事件日志留最近 100 条
 
         self._data["events"] = (
@@ -350,10 +345,10 @@ class Relationship:
         self._save()
 
 
-    # ==================================================
+    # Raw data for the interruption check
     # 给打扰判断用的原始数据
-    # （level = 综合分，保持兼容）
-    # ==================================================
+    # level = combined score, kept for compatibility
+    # level = 综合分，保持兼容
 
     def get_status(self):
 
@@ -372,9 +367,8 @@ class Relationship:
         return data
 
 
-    # ==================================================
+    # Natural-language description for the prompt
     # 给 prompt 用的自然语言描述
-    # ==================================================
 
     def describe(self):
 

@@ -1,14 +1,10 @@
 # ui/language_dialog.py
-#
-# 首次启动的语言选择。
-#
-# 在主界面出现之前弹：
-# 选完语言才进设置向导，
-# 向导走完才见主界面。
-#
-# 这个窗口本身中英双语标注——
-# 还不知道用户语言，
-# 所以两种都写死在按钮上。
+# First-run language pick. Pops up before the main window: language first,
+# then the setup wizard, then the main UI.
+# 首次启动的语言选择。主界面之前弹：先选语言，再走设置向导，最后才是主界面。
+# The dialog itself is bilingual because the user's language is unknown yet,
+# so both labels are hardcoded on the buttons.
+# 窗口本身中英双语：还不知道用户语言，所以两种文案都写死在按钮上。
 
 from PySide6.QtWidgets import (
     QDialog,

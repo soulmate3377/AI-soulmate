@@ -1,9 +1,9 @@
-# prompt/builder.py
+# prompt/builder.py — builds the prompt string sent to the model / 拼装最终发给模型的 prompt
 
 import re
 
 
-# 记忆标签的中文说法
+# Chinese wording for each memory kind / 记忆标签的中文说法
 
 _KIND_LABEL = {
 
@@ -18,8 +18,8 @@ _KIND_LABEL = {
 }
 
 
-# 画像里空着的分组不展示，
-# 免得 prompt 里塞一堆空括号
+# Empty profile groups are skipped, so the prompt isn't full of empty brackets
+# 画像里空着的分组不展示，免得 prompt 里塞一堆空括号
 
 _EMPTY_VALUES = (
     None, "", [], {}
@@ -55,7 +55,7 @@ def render_memories(memories):
 
     for item in memories or []:
 
-        # 兼容直接传字符串的老调用
+        # Old callers passed plain strings / 兼容直接传字符串的老调用
 
         if isinstance(item, str):
 
@@ -73,8 +73,8 @@ def render_memories(memories):
                 "type"
             ) == "profile":
 
-                # 画像单独一块渲染，
-                # 不混进记忆列表
+                # Profile gets its own block, not mixed into the memory list
+                # 画像单独一块渲染，不混进记忆列表
 
                 continue
 
@@ -82,7 +82,8 @@ def render_memories(memories):
                 "content"
             )
 
-            # 记忆记录本身
+            # A full memory record, not a bare string
+            # 记忆记录本身，不是裸字符串
 
             if isinstance(
                 content, dict
@@ -132,14 +133,10 @@ def render_memories(memories):
             kind, ""
         )
 
-        # prompt 里「你」= Echo、
-        # 「他」= 用户。
-        #
-        # 以前这里写的是「你」/「她」：
-        # 他说的话被标成「你」，
-        # 模型就会把他的事
-        # 说成自己的事——
-        # 「张冠李戴」的直接根源。
+        # In the prompt 你 = Echo and 他 = user. It used to be 你/她, so his
+        # words got tagged as hers and she told his life as her own.
+        # prompt 里「你」= Echo、「他」= 用户。以前写的是「你」/「她」：他说
+        # 的话被标成「你」，她就拿他的事当自己的说——「张冠李戴」的根源。
 
         prefix = "你" if (
             role == "echo"
@@ -151,9 +148,9 @@ def render_memories(memories):
                 f"{prefix}（{tag}）"
             )
 
-        # 时间只取到日期，
-        # 精确时刻对说话没帮助，
-        # 只会让她显得在查档案
+        # Date only. An exact timestamp doesn't help her talk, it just makes
+        # her sound like she's reading a file
+        # 时间只取到日期，精确时刻对说话没帮助，只会让她显得在查档案
 
         date = when[:10] if when else ""
 
@@ -243,11 +240,9 @@ class PromptBuilder:
     ):
 
 
-        # =========================
-        # 检索回来的长期记忆
-        # 以前这块算出来了却没用上，
-        # 她等于没有记忆
-        # =========================
+        # Long-term memories pulled back by retrieval. This used to be computed
+        # and then never used, so she had no memory at all.
+        # 检索回来的长期记忆。以前这块算出来了却没用上，她等于没有记忆。
 
         memory_text = render_memories(
             memories
@@ -285,12 +280,10 @@ class PromptBuilder:
 
             )
 
-        # 她今天的状态。
-        #
-        # 来自 core/inclination.py，
-        # 语气定调 + 具体许可一起给。
-        # 这里最重要的一句是「不用为话少道歉」——
-        # 不给这句，模型每次都会自己补上一句解释。
+        # Her mood today (core/inclination.py): tone + permissions in one go, key
+        # line 「不用为话少道歉」 — without it every quiet reply self-apologizes.
+        # 她今天的状态（core/inclination.py）：语气定调 + 具体许可一起给。最关键
+        # 的是「不用为话少道歉」——不给这句，每次话少都会自己补一句解释。
 
         if state:
 
@@ -306,11 +299,9 @@ class PromptBuilder:
             mood_text = "状态如常，自然就好。"
 
 
-        # =========================
-        # Echo 自己的生活背景
-        # 家乡 / 现居地 / 身份 /
-        # 此刻在做的事 / 窗外天气
-        # =========================
+        # Echo's own life background: hometown / current city / job / what she's
+        # doing right now / weather outside.
+        # Echo 自己的生活背景：家乡 / 现居地 / 身份 / 此刻在做的事 / 窗外天气。
 
         life_lines = []
 
@@ -438,10 +429,8 @@ class PromptBuilder:
         )
 
 
-        # =========================
-        # 这次回复的长短
-        # 由她根据对方的话自己把握
-        # =========================
+        # Reply length — she decides it from what the other person just said
+        # 这次回复的长短，由她根据对方的话自己把握
 
         length_text = (
             reply_length
@@ -449,11 +438,9 @@ class PromptBuilder:
         )
 
 
-        # =========================
-        # 刚才聊的几句
-        # 她看得见自己说过什么，
-        # 才不会原地打转
-        # =========================
+        # The last few turns: she sees what she already said, so she doesn't
+        # spin in place.
+        # 刚才聊的几句：她看得见自己说过什么，才不会原地打转。
 
         dialogue_block = ""
 
@@ -505,9 +492,10 @@ class PromptBuilder:
                 )
 
 
-        # 短促的笑声、应声自己不带内容，
-        # 理解端已经把它们挂回上一句了。
-        # 这一行是给她看的"他到底在回应什么"。
+        # Short laughs and acknowledgements: the understanding layer already hung
+        # them on the previous line, this line says what he was responding to.
+        # 短促的笑声、应声自己不带内容，理解端已经把它们挂回上一句了；这一行是
+        # 给她看的「他到底在回应什么」。
 
         if reacts_to:
 
@@ -522,9 +510,9 @@ class PromptBuilder:
             reacts_line = ""
 
 
-        # 回看端发现她上一句说错了。
-        # 给她一个自然找补的机会 ——
-        # 不许写成道歉。
+        # The reflection pass caught her last line being wrong — give her a
+        # natural way to patch it, never a written apology.
+        # 回看端发现她上一句说错了——给她一个自然找补的机会，不许写成道歉。
 
         if reflection_note:
 

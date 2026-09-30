@@ -1,35 +1,28 @@
-# proactive_guard.py
+# proactive_guard.py -- gatekeeper for proactive messages
+# proactive_guard.py —— 主动消息守门人
 #
-# 主动消息守门人
+# Gates before she speaks up first:
+# 她主动开口前要过的关：
 #
-# 她主动开口前要过四道关：
+#   1. Cooldown ladder: 30 min -> 1 h -> 2 h -> quiet for the rest of the day.
+#   1. 冷却阶梯：连续没人回应就越来越久地闭嘴，30 分钟 → 1 小时 → 2 小时 → 当天不再主动。
 #
-#   1. 冷却阶梯
-#      连续没人回应就越来越久地闭嘴
-#      30 分钟 → 1 小时 → 2 小时 → 当天不再主动
+#   2. Imagery dedup: the same image (rain / moon / evening wind ...) once per 24 h.
+#   2. 意象去重：24 小时内同一个意象（下雨/月亮/晚风…）只允许出现一次。
 #
-#   2. 意象去重
-#      24 小时内同一个意象（下雨/月亮/晚风…）
-#      只允许出现一次
+#   3. Retroactive promises: no "you said you would..." unless the follow-up log
+#      still holds the original wording -- one wrong claim hurts more than silence.
+#   3. 回溯性承诺：不许说"你上次说好…""你答应过…"，除非话茬里能翻出原文证据；说错一次比不说更伤人。
 #
-#   3. 回溯性承诺
-#      不许说"你上次说好…""你答应过…"，
-#      除非话茬里能翻出原文证据。
-#      说错一次比不说更伤人。
+#   4. Current scene: user typing / just replied / she is already replying -> don't disturb.
+#   4. 当下场景：用户在打字、刚回过消息、她自己正在回复 —— 一律不打扰。
 #
-#   4. 当下场景
-#      用户在打字、刚回过消息、她自己正在回复
-#      —— 一律不打扰
+#   5. Her own mood: the gates above are all about him; this one is about her --
+#      she also has days when she doesn't feel like talking.
+#   5. 她自己不想说：前面几道关全是关于他的，这一道是关于她的 —— 她也有不太想开口的日子。
 #
-#   5. 她自己不想说
-#      前面四道关全是关于他的
-#      （在不在打字、忙不忙、有没有已读不回）。
-#      这一道是关于她的 ——
-#      她也有不太想开口的日子。
-#
-# 状态写在 memory/proactive_state.json。
-# 重启后冷却记录和意象记录都还在，
-# 不会换个进程就重新开始轰炸。
+# State in memory/proactive_state.json, so cooldown and imagery survive a restart.
+# 状态写在 memory/proactive_state.json，重启后冷却记录和意象记录都还在，不会换个进程就重新开始轰炸。
 
 import re
 
@@ -45,34 +38,33 @@ from core.paths import data_dir
 _TIME_FMT = "%Y-%m-%d %H:%M:%S"
 
 
+# Cooldown ladder in minutes after consecutive unanswered messages.
 # 连续无人回应时的冷却阶梯（分钟）。
-# 阶梯走完就是当天不再主动，
-# 第二天自然重新开始。
+# Run out of rungs and she stays quiet for the day, tomorrow starts fresh.
+# 阶梯走完就是当天不再主动，第二天自然重新开始。
 
 COOLDOWN_MINUTES = [30, 60, 120]
 
 
-# 每天这个点之后才允许主动开口
+# She may only speak up between DAY_START_HOUR and DAY_END_HOUR.
+# 每天这个点之后才允许主动开口。
 
 DAY_START_HOUR = 8
 
 DAY_END_HOUR = 23
 
 
-# 用户刚说过话后的安静期（秒）。
-# 他话才说到一半，别抢话。
+# Quiet period after the user spoke (seconds) -- he may be mid-sentence, don't cut in.
+# 用户刚说过话后的安静期（秒）：他话才说到一半，别抢话。
 
 QUIET_AFTER_USER = 300
 
 
-# 意象组。
-#
-# 她一开口就容易反复用同一批画面，
-# 这里把会串味的说法归到一组。
-# 24 小时内一组只允许出现一次。
-#
-# 词表保守一点，宁可漏也不要误伤
-# 正常表达。
+# Imagery groups. She tends to reuse the same handful of pictures, so phrasings
+# that would feel like a rerun are grouped here; one group per 24 h.
+# 意象组：她一开口就容易反复用同一批画面，这里把会串味的说法归到一组，24 小时内一组只允许出现一次。
+# Word list stays conservative -- rather miss one than block normal speech.
+# 词表保守一点，宁可漏也不要误伤正常表达。
 
 IMAGERY = {
 
@@ -94,10 +86,9 @@ IMAGERY = {
 
     "散步": ("散步", "走圈", "跑圈"),
 
-    # 只拦"刚下课"这种开场套话。
-    # 不拦"上课""教室"——那不是意象，
-    # 是她的日常，
-    # 拦了她一整天都没法提学校。
+    # Blocks the "刚下课" opener only. "上课"/"教室" are her daily life, not an
+    # image -- blocking those would cost her a whole day of school talk.
+    # 只拦"刚下课"这种开场套话；"上课""教室"是她的日常，不是意象，拦了她一整天都没法提学校。
 
     "下课": ("刚下课", "下课了"),
 
@@ -119,11 +110,9 @@ IMAGERY = {
 }
 
 
-# 每天最多主动开口的次数。
-# 冷却阶梯管的是"间隔"，
-# 这个管的是"总量" ——
-# 就算他句句都认真回，
-# 她一天也不该追着他说个没完。
+# Cap on proactive messages per day. The cooldown ladder limits the gap, this
+# limits the total: even if he answers every one, she shouldn't chase him all day.
+# 每天最多主动开口的次数。冷却阶梯管"间隔"，这个管"总量" —— 就算他句句都认真回，她一天也不该追着他说个没完。
 
 MAX_PROACTIVE_PER_DAY = 6
 
@@ -174,9 +163,8 @@ def _persona_max_per_day():
         return None
 
 
-# 敷衍应声词。
-# "嗯""哈哈"这种回了等于没回，
-# 不该把冷却清零。
+# Filler acknowledgements. "嗯"/"哈哈" answer nothing and must not clear the cooldown.
+# 敷衍应声词："嗯""哈哈"这种回了等于没回，不该把冷却清零。
 
 PERFUNCTORY = {
 
@@ -225,11 +213,9 @@ def _is_perfunctory(text):
     }
 
 
-# 回溯性引用过去的约定、承诺、说法。
-#
-# 这些句式一旦说错，
-# 用户会觉得她在编造，
-# 比沉默更伤信任。
+# Retroactive references to past agreements and promises. Get one wrong and the
+# user reads it as her making things up -- worse for trust than staying silent.
+# 回溯性引用过去的约定、承诺、说法；这些句式一旦说错，用户会觉得她在编造，比沉默更伤信任。
 
 PROMISE_PATTERNS = (
 
@@ -243,14 +229,13 @@ PROMISE_PATTERNS = (
 )
 
 
-# 归因内容的边界：
-# 承诺句式后面先吃掉这些虚词，
-# 再取到第一个标点为止
+# Boundary of the attributed claim: after a promise pattern, eat these function
+# words first, then take everything up to the first punctuation mark.
+# 归因内容的边界：承诺句式后面先吃掉这些虚词，再取到第一个标点为止。
 
-# 注意不要放"来"：
-# "你上次说好要来闻的"里
-# "来"是被归因的内容本身，
-# 吃掉就只剩"闻的"了
+# Keep "来" out of that list: in "你上次说好要来闻的" it IS the attributed content,
+# eat it and only "闻的" is left.
+# 注意不要放"来"："你上次说好要来闻的"里"来"是被归因的内容本身，吃掉就只剩"闻的"了。
 
 _CLAIM_LEAD = r"[要会说过能就还得好去]*"
 
@@ -433,9 +418,9 @@ def claim_spans(message):
 
             start = i + len(pattern)
 
-    # 同一个片段被多个句式重复命中时，
-    # 只留最长的那个，
-    # 免得把本来能过的话卡死
+    # Same span matched by several patterns: keep only the longest, so a message
+    # that should pass isn't choked by a shorter fragment.
+    # 同一个片段被多个句式重复命中时，只留最长的那个，免得把本来能过的话卡死
 
     maximal = [
 
@@ -452,6 +437,7 @@ def claim_spans(message):
 
     ]
 
+    # Dedupe but keep the order.
     # 去重但保留顺序
 
     seen = set()
@@ -510,8 +496,8 @@ def has_evidence(message, follow_ups):
 
     spans = claim_spans(message)
 
-    # 提了旧事但说不出说的是什么，
-    # 更不可信
+    # Mentions the past but can't name it -- even less believable.
+    # 提了旧事但说不出说的是什么，更不可信
 
     if not spans:
 
@@ -576,9 +562,8 @@ class ProactiveGuard:
         self._rollover()
 
 
-    # ==================================================
+    # State read/write
     # 状态读写
-    # ==================================================
 
     def _rollover(self):
 
@@ -610,9 +595,8 @@ class ProactiveGuard:
         )
 
 
-    # ==================================================
+    # Recording: user spoke / she spoke
     # 记录：用户开口 / 她开口
-    # ==================================================
 
     def note_user_message(self, text=None):
 
@@ -664,8 +648,8 @@ class ProactiveGuard:
             + 1
         )
 
-        # 当天总量计数，
-        # 到顶就闭嘴到明天
+        # Daily total -- once it's hit, quiet until tomorrow.
+        # 当天总量计数，到顶就闭嘴到明天。
 
         self.state["sent_today"] = (
             int(
@@ -697,9 +681,8 @@ class ProactiveGuard:
         self._save()
 
 
-    # ==================================================
+    # Cooldown ladder
     # 冷却阶梯
-    # ==================================================
 
     def _willingness(self):
 
@@ -736,18 +719,17 @@ class ProactiveGuard:
         w = self._willingness()
 
 
-        # 她今天不太想说话：
-        # 一整天都不主动开口。
-        # 注意这不等于她不回他 ——
-        # 他找过来，她还是会回。
+        # She doesn't feel like talking today: no proactive messages at all. That is
+        # not the same as refusing him -- if he comes to her, she still answers.
+        # 她今天不太想说话：一整天都不主动开口；这不等于她不回他 —— 他找过来，她还是会回。
 
         if w < inclination.WILLINGNESS_BLOCK:
 
             return None
 
 
-        # 兴致不高：冷却翻倍，
-        # 而不是完全闭嘴
+        # Low interest: double the cooldown instead of shutting up completely.
+        # 兴致不高：冷却翻倍，而不是完全闭嘴。
 
         if w < inclination.WILLINGNESS_SLOW:
 
@@ -790,10 +772,8 @@ class ProactiveGuard:
         )
 
 
-    # ==================================================
-    # 前置判断：
-    # 现在值不值得去想一句主动消息
-    # ==================================================
+    # Pre-check: is it worth composing a proactive message right now?
+    # 前置判断：现在值不值得去想一句主动消息
 
     def should_attempt(self, ui_state=None):
 
@@ -805,9 +785,8 @@ class ProactiveGuard:
 
         ui_state = ui_state or {}
 
-        # --------------------
-        # 深夜不打扰
-        # --------------------
+        # Late night: don't disturb.
+        # 深夜不打扰。
 
         hour = datetime.now().hour
 
@@ -819,9 +798,8 @@ class ProactiveGuard:
             return False, "深夜不打扰"
 
 
-        # --------------------
-        # 他正在打字
-        # --------------------
+        # He is typing.
+        # 他正在打字。
 
         if ui_state.get(
             "user_typing"
@@ -833,9 +811,8 @@ class ProactiveGuard:
             )
 
 
-        # --------------------
-        # 她正在回复
-        # --------------------
+        # She is already replying.
+        # 她正在回复。
 
         if ui_state.get(
             "echo_busy"
@@ -847,20 +824,15 @@ class ProactiveGuard:
             )
 
 
-        # --------------------
-        # 她今天不太想说话
-        #
-        # 前面每一票都是关于他的：
-        # 他在不在打字、他忙不忙、
-        # 他有没有已读不回。
-        #
-        # 这一票是关于她的。
-        # 一个只在对方方便时开口的人
-        # 不是随和，是没有自己。
-        #
-        # 冷却里已经按意愿拉长过一轮，
-        # 这里只拦最不想说话的那一档
-        # --------------------
+        # She doesn't feel like talking today.
+        # 她今天不太想说话。
+        # Every other vote is about him: is he typing, is he busy, did he leave her
+        # on read. This vote is about her -- someone who speaks only when the other
+        # person is free isn't easygoing, she just has no self left.
+        # 前面每一票都是关于他的：他在不在打字、他忙不忙、他有没有已读不回。
+        # 这一票是关于她的 —— 一个只在对方方便时开口的人不是随和，是没有自己。
+        # Cooldown already stretched once by willingness; only the lowest tier is blocked here.
+        # 冷却里已经按意愿拉长过一轮，这里只拦最不想说话的那一档。
 
         if (
             self._willingness()
@@ -873,10 +845,8 @@ class ProactiveGuard:
             )
 
 
-        # --------------------
-        # 他刚说过话，
-        # 让话头凉一凉
-        # --------------------
+        # He just talked, let the thread cool down.
+        # 他刚说过话，让话头凉一凉。
 
         last_user = self.state.get(
             "last_user"
@@ -900,9 +870,8 @@ class ProactiveGuard:
                 )
 
 
-        # --------------------
+        # Cooldown
         # 冷却
-        # --------------------
 
         if int(
 
@@ -937,10 +906,8 @@ class ProactiveGuard:
         return True, "可以开口"
 
 
-    # ==================================================
-    # 后置审核：
-    # 生成出来的这句话能不能发
-    # ==================================================
+    # Post-check: can this generated line actually be sent?
+    # 后置审核：生成出来的这句话能不能发
 
     def imagery_hits(self, message):
 
@@ -1018,9 +985,8 @@ class ProactiveGuard:
             return False, "空消息"
 
 
-        # --------------------
+        # Imagery dedup
         # 意象去重
-        # --------------------
 
         fresh = self.fresh_imagery()
 
@@ -1038,9 +1004,8 @@ class ProactiveGuard:
                 )
 
 
-        # --------------------
+        # Too close to the previous line
         # 跟上一句太像
-        # --------------------
 
         prev = self.state.get(
             "last_proactive_text"
@@ -1056,9 +1021,8 @@ class ProactiveGuard:
             )
 
 
-        # --------------------
+        # Retroactive promise reference
         # 回溯性承诺引用
-        # --------------------
 
         if references_past_promise(
             message

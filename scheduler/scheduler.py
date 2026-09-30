@@ -14,6 +14,7 @@ class Scheduler:
 
         self.brain = brain
 
+        # check interval in seconds
         # 检查间隔（秒）
 
         self.interval = interval

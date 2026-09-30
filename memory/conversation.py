@@ -17,11 +17,8 @@ class ConversationManager:
         )
 
 
-        # 没有聊天记录文件时创建。
-        # 统一走原子写入，
-        # 任何时刻断电都最多丢一个
-        # 还没写完的 .tmp，
-        # 不会留下半个 conversations.json
+        # Create it on first run; atomic writes mean a power cut loses at most one .tmp, never half a file
+        # 没有聊天记录文件时创建。统一走原子写入，断电最多丢一个没写完的 .tmp，不会留下半个 conversations.json
 
         if not os.path.exists(self.file):
 
@@ -63,8 +60,8 @@ class ConversationManager:
             return data
 
 
-        # 到这里要么文件不存在，
-        # 要么已经损坏
+        # Either the file is gone or it is corrupt
+        # 到这里要么文件不存在，要么已经损坏
 
         if os.path.exists(self.file):
 

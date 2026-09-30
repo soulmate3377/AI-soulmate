@@ -1,37 +1,26 @@
 # perception.py
-#
-# 理解端（感知层）：
-# 每条用户消息先过这里，
-# 一次调用产出全部结构化判断——
-# 情绪、场景、回复长短、
-# 记忆操作、关系事件、话茬。
-#
-# 它没有人格，只输出 JSON。
-# 它的输出必须先过
-# understanding_schema.validate，
-# 脏数据到不了下游。
-#
-# 调用失败时抛异常，
-# 由 brain 回退到规则分析，
-# 聊天永不中断。
+# Understanding layer: every user message passes through here first, and one
+# call yields all structured judgements — emotion, scene, reply length, memory
+# ops, relationship events, follow-ups.
+# No persona here: it only emits JSON, and the output must pass
+# understanding_schema.validate so dirty data never reaches downstream.
+# On failure it raises; brain falls back to rule analysis, chat never breaks.
+# 理解端（感知层）：每条用户消息先过这里，一次调用产出全部结构化判断——
+# 情绪、场景、回复长短、记忆操作、关系事件、话茬。
+# 它在这里不带人格、只输出 JSON，且必须先过 understanding_schema.validate，
+# 脏数据到不了下游；失败就抛异常，由 brain 回退规则分析，聊天永不中断。
 
 import json
-
 from datetime import datetime
-
 from core.understanding_schema import (
     validate,
 )
-
-
 _SYSTEM = (
     "你是陪伴机器人的感知分析层。"
     "你只输出合法的 json 对象，"
     "不输出任何解释、"
     "不使用 markdown 代码块。"
 )
-
-
 _PROMPT = """分析用户刚发来的消息，结合最近对话，输出一个 json 对象。
 
 现在的时间：{now}
@@ -96,33 +85,21 @@ memory_ops 规则：
 
 class Perception:
 
-
     def __init__(self, llm):
-
         self.llm = llm
 
-
-    # ==================================================
-    # 理解一条消息。
-    # 失败抛异常，由调用方回退。
-    # ==================================================
-
+    # Understand one message; raises so the caller can fall back
+    # 理解一条消息，失败抛异常，由调用方回退。
     def understand(
-
         self,
         message,
         recent_dialogue=None,
         profile_summary=""
     ):
-
-
         dialogue = self._render_dialogue(
             recent_dialogue
         )
-
-
         prompt = _PROMPT.format(
-
             now=datetime.now().strftime(
                 "%Y-%m-%d %H:%M"
             ),
@@ -131,76 +108,44 @@ class Perception:
                 profile_summary or "（空）"
             ),
             message=message,
-
         )
 
-
-        # 失败重试一次，
-        # 再失败抛给 brain 回退
-
+        # One retry, then raise for brain to fall back
+        # 失败重试一次，再失败抛给 brain 回退
         last_error = None
-
         for _ in range(2):
-
             try:
-
                 raw = self.llm.generate_json(
-
                     prompt,
                     system=_SYSTEM,
-
                 )
-
                 return validate(
                     json.loads(raw)
                 )
-
             except Exception as e:
-
                 last_error = e
-
-
         raise RuntimeError(
-
             f"理解端调用失败: {last_error}"
-
         )
-
 
     @staticmethod
     def _render_dialogue(recent_dialogue):
-
         if not recent_dialogue:
-
             return ""
-
         lines = []
-
         for item in recent_dialogue[-6:]:
-
             content = (
-
                 item.get("content")
                 or ""
-
             ).replace("\n", " ").strip()
-
             if not content:
-
                 continue
-
             who = (
-
                 "对方"
-
                 if item.get("role") == "user"
-
                 else "Soulmate"
-
             )
-
             lines.append(
                 f"{who}：{content}"
             )
-
         return "\n".join(lines)

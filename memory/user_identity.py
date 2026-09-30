@@ -17,6 +17,7 @@ class UserIdentity:
         )
 
 
+        # Create the file on first run
         # 初始化文件
 
         if not os.path.exists(
@@ -55,9 +56,8 @@ class UserIdentity:
 
 
 
-    # =====================
+    # Save the identity model
     # 保存身份模型
-    # =====================
 
     def save(self, identity):
 
@@ -85,9 +85,8 @@ class UserIdentity:
 
 
 
-    # =====================
+    # Read the identity model back
     # 获取身份模型
-    # =====================
 
     def get(self):
 
@@ -105,9 +104,8 @@ class UserIdentity:
 
 
 
-    # =====================
+    # Incremental update
     # 增量更新
-    # =====================
 
     def update_item(
         self,
