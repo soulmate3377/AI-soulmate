@@ -30,6 +30,22 @@ REPO = Path(__file__).resolve().parent.parent
 GIT = r"D:\Git\cmd\git.exe"
 
 
+def normalize(text):
+    """
+    Drop CR so LF and CRLF compare equal.
+
+    去掉 CR，让 LF 与 CRLF 视为相同。
+    The repo stores LF but the working tree may carry CRLF because of
+    core.autocrlf; that is a checkout artifact, not a code change.
+    Otherwise every token string is compared verbatim.
+
+    仓库里存 LF，工作区因 core.autocrlf 可能是 CRLF，
+    那只是检出产物，不是代码改动。除换行外一律逐字严格比对。
+    """
+
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
 def code_tokens(source_bytes):
     """
     Return the token stream with comments dropped.
@@ -43,10 +59,10 @@ def code_tokens(source_bytes):
 
     out = []
     try:
-        for tok in tokenize.tokenize(BytesIO(source_bytes).readline):
+        for tok in tokenize.tokenize(BytesIO(normalize(source_bytes.decode("utf-8")).encode("utf-8")).readline):
             if tok.type == tokenize.COMMENT:
                 continue
-            out.append((tok.type, tok.string))
+            out.append((tok.type, normalize(tok.string)))
     except Exception as exc:
         return None, f"tokenize failed: {exc}"
     return out, None
@@ -114,10 +130,17 @@ def main():
         )
 
         if old_toks == new_toks:
-            changed = old_bytes != new_bytes
+            # Normalize line endings before deciding whether the file was
+            # actually rewritten; CRLF vs LF is a checkout artifact.
+            # 判断是否真的改写过之前先归一化换行，CRLF/LF 只是检出差异。
+            content_same = normalize(old_bytes.decode("utf-8")) == normalize(new_bytes.decode("utf-8"))
+            if content_same:
+                status = "UNCHANGED"
+            else:
+                status = "COMMENTS_ONLY"
             results.append({
                 "file": rel,
-                "status": "COMMENTS_ONLY" if changed else "UNCHANGED",
+                "status": status,
                 "old_comments": old_comments,
                 "new_comments": new_comments,
                 "detail": "",
@@ -152,7 +175,6 @@ def main():
     print(f"untouched             : {len(same)}")
     print(f"PROBLEMS              : {len(bad)}")
     print()
-
     if changed:
         print("-- rewritten (comments only) / 已改写 --")
         for r in changed:
