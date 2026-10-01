@@ -3,7 +3,7 @@
 **A virtual companion who lives on your computer — with long-term memory and the initiative to message you first.**
 **一个住在你电脑里的虚拟恋人 —— 有长期记忆，也会主动找你。**
 
-[中文](#soulmate) · [English quick start](#english-quick-start)
+[下载 Download](#快速开始) · [English quick start](#english-quick-start)
 
 她不是"你问它答"的聊天机器人，而是具备三样关键能力：
 
@@ -57,6 +57,22 @@
   **Data safety**: atomic JSON writes, daily backups (7 kept), API keys encrypted with Windows DPAPI.
 
 ## 快速开始
+
+### 最省事：下载打包好的 exe
+
+到 [**Releases**](https://github.com/soulmate3377/AI-soulmate/releases) 页面下载 `Soulmate.exe`，放进一个空文件夹双击即可。
+
+**不用装 Python、不用装依赖。** 数据会写在 exe 旁边的 `SoulmateData/` 里，整个文件夹拷走就是搬走了她。
+
+> 首次启动会出现语言选择 → 设置向导（选服务商、填 API Key、给她起名字）→ 主界面。
+
+### Easiest: download the packaged exe
+
+Grab `Soulmate.exe` from the [**Releases**](https://github.com/soulmate3377/AI-soulmate/releases) page and double-click it in an empty folder.
+
+**No Python, no dependency install.** Data lands in `SoulmateData/` next to the exe — copy that folder and you have moved her.
+
+### 从源码跑（想改代码 / 用终端版）
 
 需要 **Python 3.12+** 和 **Windows**（DPAPI 加密与自启用到 Windows；macOS/Linux 未测试）。
 
@@ -183,6 +199,12 @@ config/persona.yaml     人设配置
   The only outbound traffic is your model provider and the weather lookup.
 - 仓库本身不含任何用户数据（`.gitignore` 已排除）
   The repository contains no user data (`.gitignore` excludes it).
+
+## 自己打包 / Building from source
+
+exe 不进仓库（386MB 的二进制会永久撑大 git 历史），分发走 Releases 附件。打包步骤、发布流程和常见问题见 [RELEASE.md](RELEASE.md)。
+
+The exe never enters the repo — a 386MB binary would bloat git history forever; distribution goes through release attachments. See [RELEASE.md](RELEASE.md) for the build steps, release flow and troubleshooting.
 
 ## Roadmap
 

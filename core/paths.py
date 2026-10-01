@@ -62,6 +62,12 @@ def _migrate_from_appdata(target):
     首次在U盘上运行时，
     把本机 %APPDATA% 里的旧数据
     整体带过来
+
+    First run from a USB stick: bring the machine's old %APPDATA% data
+    along, so the stick carries her memories instead of starting empty.
+
+    Returns True when data was actually copied.
+    真的搬了东西才返回 True。
     """
 
     try:
@@ -84,9 +90,13 @@ def _migrate_from_appdata(target):
 
             shutil.copytree(old, target)
 
+            return True
+
     except OSError:
 
         pass
+
+    return False
 
 
 
@@ -125,13 +135,44 @@ def data_dir():
 
                 base = portable
 
-            elif _on_removable_drive(exe_dir):
+            else:
 
-                _migrate_from_appdata(
-                    portable
-                )
+                # Portable first: if a packaged copy can write next to
+                # itself, keep the data there. A visible SoulmateData folder
+                # beside the exe is what people can find and back up; the
+                # %APPDATA% fallback is a hidden directory they will never
+                # stumble on. Only give up on portable when the write
+                # actually fails (Program Files, read-only drive).
+                # 便携优先：打包后的程序只要能在自己旁边写，就把数据放那儿。
+                # exe 旁边一个看得见的 SoulmateData 才是用户找得到、备份得了的；
+                # %APPDATA% 那个隐藏目录没人会翻到。只有真的写不进去
+                # （比如装在 Program Files、只读盘）才退回 APPDATA。
+                try:
 
-                base = portable
+                    portable.mkdir(parents=True)
+
+                    if not _migrate_from_appdata(portable):
+
+                        # Nothing old to bring over, and an empty folder would
+                        # just look like leftover junk. Recording the migration
+                        # below recreates it when a write really happens.
+                        # 没有旧数据可搬，空目录只会像残留垃圾。下面真正写入时
+                        # 会自动重建。
+                        try:
+
+                            portable.rmdir()
+
+                        except OSError:
+
+                            pass
+
+                    base = portable
+
+                except OSError:
+
+                    # Not writable next to the exe; fall through to %APPDATA%.
+                    # exe 旁边不可写，退回 %APPDATA%。
+                    base = None
 
         if base is None and not getattr(
             sys, "frozen", False

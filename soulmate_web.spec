@@ -1,7 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller 打包配置：Soulmate Web 手机端（单文件）
-# 用法：pyinstaller echo_web.spec --noconfirm
+# PyInstaller build config: Soulmate web build for phones, single file
+#
+# 用法 / Usage:
+#   pyinstaller soulmate_web.spec --noconfirm
+#
 # 产物：dist/SoulmateWeb.exe 一个文件
+# Output: a single dist/SoulmateWeb.exe
 #
 # 和桌面版的区别：
 #   - 入口是 web_server.py（HTTP 服务，不是 GUI）

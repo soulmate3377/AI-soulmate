@@ -1,7 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller 打包配置：Soulmate 桌面版（单文件）
-# 用法：pyinstaller echo.spec --noconfirm
+# PyInstaller build config: Soulmate desktop build, single file
+#
+# 用法 / Usage:
+#   pyinstaller soulmate.spec --noconfirm
+#
 # 产物：dist/Soulmate.exe 一个文件，双击即用
+# Output: a single dist/Soulmate.exe, double-click to run
+#
+# 打包前先装好依赖（含 pyinstaller）：
+# Install dependencies first, pyinstaller included:
+#   uv pip install --python .venv\Scripts\python.exe -r requirements.txt pyinstaller
 
 from PyInstaller.utils.hooks import collect_all
 
