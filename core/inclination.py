@@ -387,6 +387,24 @@ class Inclination:
 
             self._write(data)
 
+            # Record the drift so the trend is visible, not just today's value.
+            # Only log when the number actually moved; otherwise every check
+            # would append a line and drown the signal.
+            # 记下这次漂移，让"走势"可见而不只是今天的值。
+            # 只在数字真的动了时记，否则每次检查都写一行会把信号淹掉。
+            if delta != 0:
+                try:
+                    from core import observe
+                    observe.note(
+                        "willingness",
+                        willingness=w,
+                        delta=round(delta, 4),
+                        level=level,
+                        emotion=emotion,
+                    )
+                except Exception:
+                    pass
+
             return data
 
         except Exception:

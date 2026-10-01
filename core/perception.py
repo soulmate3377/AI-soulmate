@@ -112,18 +112,52 @@ class Perception:
 
         # One retry, then raise for brain to fall back
         # 失败重试一次，再失败抛给 brain 回退
+        #
+        # The reason matters: empty content means the thinking budget ran out
+        # before any json came out, a decode error means malformed json, and a
+        # schema error means the shape was wrong. Those need different fixes,
+        # so record which one it was instead of just "it failed".
+        # 失败原因是关键：内容为空 = 思考把额度吃光了、json 没吐出来；
+        # 解析失败 = json 本身坏了；schema 失败 = 字段结构不对。
+        # 三种病要三种药，所以记下是哪一种，而不是只记"失败了"。
         last_error = None
+        reason = "unknown"
         for _ in range(2):
             try:
                 raw = self.llm.generate_json(
                     prompt,
                     system=_SYSTEM,
                 )
-                return validate(
-                    json.loads(raw)
-                )
+                if not (raw or "").strip():
+                    reason = "empty_content"
+                    raise ValueError(
+                        "理解端返回空内容"
+                    )
+                try:
+                    parsed = json.loads(raw)
+                except ValueError as e:
+                    reason = "bad_json"
+                    raise ValueError(
+                        f"理解端 json 解析失败: {e}"
+                    )
+                try:
+                    return validate(parsed)
+                except Exception as e:
+                    reason = "schema"
+                    raise ValueError(
+                        f"理解端 schema 校验失败: {e}"
+                    )
             except Exception as e:
                 last_error = e
+        try:
+            from core import observe
+            observe.note(
+                "understand_error",
+                reason=reason,
+                error=str(last_error)[:200],
+            )
+        except Exception:
+            pass
         raise RuntimeError(
             f"理解端调用失败: {last_error}"
         )

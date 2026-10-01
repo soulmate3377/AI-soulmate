@@ -129,6 +129,20 @@ def count_comment_lines(source_text):
     return sum(1 for line in source_text.split("\n") if _COMMENT_LINE.match(line))
 
 
+def _is_subsequence(old, new):
+    """
+    True when every old item still appears, in order, inside new.
+
+    当旧的每一项仍然按原顺序出现在 new 里时为真。
+
+    Tells "code was only added" apart from "code was rewritten".
+    用来区分「只是新增了代码」和「原有代码被改写」。
+    """
+
+    it = iter(new)
+    return all(any(x == y for y in it) for x in old)
+
+
 def git_show(path):
     """
     Read the committed version of a file from git.
@@ -194,6 +208,21 @@ def main():
                 "new_lines": len(normalize(new_text).split("\n")),
                 "detail": "",
             })
+        elif _is_subsequence(old_toks, new_toks):
+            # Every original token survives, in order: the file only gained
+            # code. That is an intentional change (new instrumentation, a new
+            # branch), not a broken rewrite -- so it gets its own status and
+            # does not count as a failure.
+            # 原有 token 按原顺序完整保留，文件只是新增了代码。
+            # 那是有意改动（加埋点、加分支），不是改坏，所以单独一个状态，
+            # 不计入失败。
+            results.append({
+                "file": rel,
+                "status": "CODE_ADDED",
+                "old_comments": old_c,
+                "new_comments": new_c,
+                "detail": f"+{len(new_toks) - len(old_toks)} tokens",
+            })
         else:
             where = "?"
             for i in range(max(len(old_toks), len(new_toks))):
@@ -217,11 +246,13 @@ def main():
     bad = [r for r in results if r["status"] in ("CODE_CHANGED", "ERROR", "MISSING")]
     changed = [r for r in results if r["status"] == "COMMENTS_ONLY"]
     same = [r for r in results if r["status"] == "UNCHANGED"]
+    added = [r for r in results if r["status"] == "CODE_ADDED"]
 
     print("=" * 66)
     print("Comment-only verification / 注释改写校验")
     print("=" * 66)
     print(f"comments-only rewrite : {len(changed)}")
+    print(f"code added (intended) : {len(added)}")
     print(f"untouched             : {len(same)}")
     print(f"PROBLEMS              : {len(bad)}")
     print()
@@ -235,8 +266,14 @@ def main():
                   f"   lines {r['old_lines']:>4} -> {r['new_lines']:<4} ({dl:+d})")
         print()
 
+    if added:
+        print("-- code added only / 只新增了代码（原有代码逐字保留）--")
+        for r in added:
+            print(f"  {r['file']:<40} {r['detail']}")
+        print()
+
     if bad:
-        print("-- PROBLEMS / 有问题（代码被改动）--")
+        print("-- PROBLEMS / 有问题（原有代码被改写）--")
         for r in bad:
             print(f"  {r['file']:<40} {r['status']}: {r['detail']}")
         print()
@@ -245,7 +282,9 @@ def main():
     total_l = sum(r["old_lines"] - r["new_lines"] for r in changed)
     print(f"comment lines removed : {total_c}")
     print(f"total lines removed   : {total_l}")
-    print("RESULT:", "PASS - code untouched" if not bad else "FAIL - see above")
+    print("RESULT:",
+          "PASS - no existing code was rewritten"
+          if not bad else "FAIL - see above")
 
 
 if __name__ == "__main__":

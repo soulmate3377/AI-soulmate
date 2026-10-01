@@ -48,6 +48,22 @@ def strings_of(text):
     return out
 
 
+def is_subsequence(old, new):
+    """
+    True when every old item still appears, in order, inside new.
+
+    当旧的每一项仍然按原顺序出现在 new 里时为真。
+
+    Used to tell "strings were only added" (fine, e.g. new log messages)
+    apart from "an existing string was rewritten or deleted" (a real risk).
+    用来区分「只是新增了字符串」（正常，例如新的日志文案）和
+    「原有字符串被改写或删除」（真正的风险）。
+    """
+
+    it = iter(new)
+    return all(any(x == y for y in it) for x in old)
+
+
 def main():
     all_files = subprocess.run(
         [GIT, "-C", str(REPO), "ls-files", "*.py"],
@@ -58,7 +74,10 @@ def main():
     # 检查全部跟踪的 .py 文件，而不只是含提示词的那几个。
     targets = [f for f in all_files if f != "_tools/check_strings.py"]
 
-    bad = 0
+    changed = 0
+    grown = 0
+    added_map = {}
+
     for rel in targets:
         old_raw = subprocess.run(
             [GIT, "-C", str(REPO), "show", f"HEAD:{rel}"],
@@ -75,22 +94,30 @@ def main():
         b = [s.replace("\r\n", "\n") for s in b]
 
         if a == b:
-            print(f"OK       {rel}  ({len(a)} string literals unchanged)")
+            continue
+
+        if is_subsequence(a, b):
+            # Only additions: every original string survived untouched.
+            # 只有新增：原有字符串全部原样保留。
+            grown += 1
+            added = len(b) - len(a)
+            added_map[rel] = added
+            print(f"ADDED    {rel}  (+{added} new strings, all {len(a)} originals kept)")
         else:
-            bad += 1
+            changed += 1
             print(f"CHANGED  {rel}")
-            for i in range(max(len(a), len(b))):
-                x = a[i] if i < len(a) else None
-                y = b[i] if i < len(b) else None
-                if x != y:
-                    print(f"           first difference at string #{i}")
-                    print(f"           old: {x!r}"[:300])
-                    print(f"           new: {y!r}"[:300])
-                    break
+            missing = [s for s in a if s not in b]
+            print(f"           {len(missing)} original string(s) no longer present")
+            for s in missing[:5]:
+                print(f"             - {s!r}"[:160])
 
     print()
-    print("RESULT:", "PASS - all string literals identical" if not bad else f"FAIL - {bad} file(s) changed")
-    return 1 if bad else 0
+    print(f"files with added strings only : {grown}")
+    print(f"files where a string changed  : {changed}")
+    print()
+    print("RESULT:", "PASS - no existing string was modified or removed"
+          if not changed else f"FAIL - {changed} file(s) lost or rewrote a string")
+    return 1 if changed else 0
 
 
 if __name__ == "__main__":

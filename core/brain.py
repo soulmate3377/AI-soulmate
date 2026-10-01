@@ -355,6 +355,56 @@ class Brain:
             )
 
 
+        # Record which path this turn actually took. A silent fallback looks
+        # exactly like a healthy turn from the outside, so without this line
+        # "she reads him badly" can never be traced to its real cause.
+        # The reason lives in perception.py's understand_error record; here we
+        # only need to know that this turn fell back.
+        # 记下这一轮实际走了哪条路。静默回退从外面看和正常一轮没有区别，
+        # 没有这一行，"她读不懂他"就永远追不到真正的原因。
+        # 具体失败原因由 perception.py 的 understand_error 记录，这里只需要
+        # 知道这一轮回退了。
+        try:
+
+            from core import observe
+
+            # Snapshot her side of the state too, so the report can line up
+            # "what she understood" against "how much she felt like talking".
+            # 顺便把她那一侧的状态快照下来，报告才能把"读到了什么"
+            # 和"她当时多想说话"对上。
+            try:
+                incl = self.inclination.current()
+                w_now = incl.get("willingness")
+                lvl = incl.get("level")
+            except Exception:
+                w_now = None
+                lvl = None
+
+            if understanding is not None:
+                observe.note(
+                    "understand_ok",
+                    emotion=understanding.get("emotion"),
+                    intensity=understanding.get("intensity"),
+                    need=understanding.get("need"),
+                    scene=understanding.get("scene"),
+                    length=understanding.get("reply_length"),
+                    reacts_to=bool(
+                        understanding.get("reacts_to")
+                    ),
+                    willingness=w_now,
+                    level=lvl,
+                )
+            else:
+                observe.note(
+                    "understand_fallback",
+                    reason="exception",
+                    willingness=w_now,
+                    level=lvl,
+                )
+        except Exception:
+            pass
+
+
         if understanding is not None:
 
             emotion_result = {
@@ -1272,6 +1322,41 @@ class Brain:
             }
 
         )
+
+
+
+        # Proactive attempt: one line per decision, so the report can answer
+        # "how often did she want to speak, and how often was she stopped".
+        # proactive_think is the funnel every entry point goes through, which
+        # is why the hook lives here and not in the UI layers.
+        # 主动开口的一次决策：一笔一条，报告才能回答
+        # "她多想开口、被拦下多少次"。
+        # proactive_think 是所有入口的共同漏斗，所以钩子放这里而不是 UI 层。
+        try:
+
+            from core import observe
+
+            if result:
+                observe.note(
+                    "proactive",
+                    allowed=True,
+                    action=decision.get("type")
+                    if isinstance(decision, dict) else None,
+                    chars=len(
+                        (result or {}).get("content") or ""
+                    ),
+                )
+            else:
+                observe.note(
+                    "proactive",
+                    allowed=False,
+                    action=decision.get("type")
+                    if isinstance(decision, dict) else None,
+                )
+
+        except Exception:
+
+            pass
 
 
 
