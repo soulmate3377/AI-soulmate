@@ -195,6 +195,10 @@ runtime_tmpdir='.',
 
 让 exe 解压到**自己旁边**，而不是系统 `%TEMP%`。这样绕开了杀软对临时目录的监控，而且仍然是单文件分发。
 
+> **已实测验证**：在装了第三方杀软、且未加任何白名单的机器上，
+> 改动前双击报 `Could not create temporary directory!`；
+> 加上这行后重新打包，**双击正常启动**。
+
 **代价（要写进发布说明告诉用户）**：
 
 | 事项 | 说明 |
@@ -211,6 +215,7 @@ runtime_tmpdir='.',
 # 产物是 dist\Soulmate\ 文件夹，压成 zip 发给用户
 ```
 
+### exe 起来但界面空白
 
 多半是 `assets/` 没打进去。确认 spec 的 `datas` 里有 `('assets', 'assets')`。
 
