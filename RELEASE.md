@@ -174,7 +174,43 @@ uv 的缓存目录没写权限。设 `UV_CACHE_DIR` 到项目内（见上面第�
 
 spec 里已经从 `sys.base_prefix\DLLs` 手动收集了。如果仍然报，检查这个目录下是不是真有这两个 DLL。
 
-### exe 起来但界面空白
+### exe 双击报 `Could not create temporary directory!`
+
+**这是发版前必须知道的一个坑。**
+
+单文件（onefile）exe 每次启动都要把自己 344MB 解压到一个新的 `%TEMP%\_MEIxxxx` 目录再执行。这个"自己解压自己再运行"的行为**正是杀毒软件启发式重点拦截的模式**，火绒 / 360 / 腾讯电脑管家 / 卡巴斯基 都可能直接拦掉，用户只会看到一个光秃秃的报错框：
+
+```
+Error
+Could not create temporary directory!
+```
+
+`%TEMP%` 被组策略锁死、或指向不存在的路径时，也会报同一个错。
+
+**解决办法已经写进 `soulmate.spec`**：
+
+```python
+runtime_tmpdir='.',
+```
+
+让 exe 解压到**自己旁边**，而不是系统 `%TEMP%`。这样绕开了杀软对临时目录的监控，而且仍然是单文件分发。
+
+**代价（要写进发布说明告诉用户）**：
+
+| 事项 | 说明 |
+| --- | --- |
+| exe 必须放在**可写目录** | 桌面、文档、U 盘都行；**不能放 `Program Files`** |
+| 运行时会多一个 `_MEIxxxx` 文件夹 | 就在 exe 旁边，**退出时自动删除** |
+| 首次启动慢 | 要解压 344MB，之后正常 |
+
+如果加了这个配置**仍然被拦**，退路是发**文件夹版**（onedir）——它启动时不解压任何东西，杀软没有理由拦：
+
+```powershell
+# 在 spec 里把 EXE(...) 的 binaries/datas 移到 COLLECT(...)，然后：
+.venv\Scripts\python.exe -m PyInstaller soulmate_onedir.spec --noconfirm
+# 产物是 dist\Soulmate\ 文件夹，压成 zip 发给用户
+```
+
 
 多半是 `assets/` 没打进去。确认 spec 的 `datas` 里有 `('assets', 'assets')`。
 
