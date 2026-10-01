@@ -158,6 +158,29 @@ def main():
             print("     注意：目前的下限是 DROP_CAP（每天最多比开盘低 0.15），")
             print("     而且第二天会重新掷骰子 —— 也就是坏状态不会累积。")
 
+    # ---- 主动开口 ----
+    print()
+    print("-" * 62)
+    print("主动开口 / Proactive attempts")
+    print("-" * 62)
+
+    attempts = s["proactive_attempts"]
+
+    if not attempts:
+        print("  (这段时间没有主动开口的决策记录)")
+    else:
+        blocked = s["proactive_blocked"]
+        block_rate = blocked / attempts if attempts else 0.0
+
+        print(f"  决策次数: {attempts}")
+        print(f"  真的开口: {attempts - blocked}")
+        print(f"  被拦下  : {blocked}")
+        print(f"  拦下比例: {block_rate * 100:.1f}%  [{bar(block_rate)}]")
+        print()
+        print("  关心这个数字，是因为它把'她的意愿'和'实际行为'连了起来：")
+        print("  如果拦下比例近乎 100%，说明守门人把她的主动性全吃掉了；")
+        print("  如果接近 0%，说明门槛对她不构成约束。")
+
     print()
     print("=" * 62)
     print("文件位置 / where the raw data lives:")
