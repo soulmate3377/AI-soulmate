@@ -308,7 +308,33 @@ def resource_path(rel):
     只读资源（打包进 exe 的文件）
     PyInstaller 运行时在 _MEIPASS 下
 
+    Read-only assets bundled into the exe; under PyInstaller they live in
+    _MEIPASS.
+
+    交付一个绝对路径。以前兜底直接返回相对的 rel，能不能找到文件就完全
+    取决于当前工作目录——用快捷方式启动、或"起始位置"不是项目目录时，
+    图标会静默变成空图标，托盘图标就没了。现在按顺序试：_MEIPASS、
+    当前目录、项目根目录，都不行才退回原样。
+
+    Always hands back an absolute path where one exists. The old fallback
+    returned the relative name as-is, so whether the file was found depended
+    entirely on the working directory: launched from a shortcut with a
+    different "start in" folder, icons silently became null and the tray
+    icon vanished. Now it tries _MEIPASS, then the cwd, then the repo root,
+    and only then gives up.
+
     """
+
+
+    p = Path(rel)
+
+
+    if p.is_absolute():
+
+        return str(p)
+
+
+    candidates = []
 
 
     base = getattr(
@@ -320,11 +346,38 @@ def resource_path(rel):
 
     if base:
 
-        p = Path(base) / rel
+        candidates.append(
+            Path(base) / rel
+        )
 
-        if p.exists():
 
-            return str(p)
+    candidates.append(Path(rel))
+
+
+    # 源码运行：相对路径是相对项目根，不是相对当前目录
+    # Running from source: the relative path is anchored at the repo root,
+    # not at whatever the working directory happens to be.
+
+    candidates.append(
+
+        Path(__file__)
+        .resolve().parent.parent
+        / rel
+
+    )
+
+
+    for cand in candidates:
+
+        try:
+
+            if cand.exists():
+
+                return str(cand)
+
+        except OSError:
+
+            continue
 
 
     return rel

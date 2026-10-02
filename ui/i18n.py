@@ -199,9 +199,12 @@ EN_MAP = {
     "⚙ 设置": "⚙ Settings",
     "⇩ 导出": "⇩ Export",
     "我没有离开，"
-    "双击托盘图标就能找到我":
-        "I'm still here — "
-        "double-click the tray icon to find me",
+    "双击托盘图标就能找到我。"
+    "Windows 11 上图标可能被折叠"
+    "在隐藏区，点任务栏的 ^ 就能看到":
+        "I'm still here — double-click the tray icon to find me. "
+        "On Windows 11 it may be tucked into the hidden area; "
+        "click the ^ arrow on the taskbar to reach it",
     "打开": "Open",
     "退出": "Quit",
 

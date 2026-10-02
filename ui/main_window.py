@@ -308,6 +308,22 @@ class MainWindow(QMainWindow):
 
         self.tray = None
 
+        # 托盘菜单要自己持有，否则被回收就弹不出来。
+        # 在这里初始化，免得 _setup_tray 提前 return 时它是未定义属性。
+        # Keep a reference to the tray menu or it gets collected and stops
+        # popping up. Initialised here so it is never an undefined attribute
+        # when _setup_tray returns early.
+        self._tray_menu = None
+
+        # 托盘是否真的能用（建起来了 **且** 图标不是空的）。
+        # 只看 self.tray 是不够的：图标加载失败时它照样不是 None，
+        # 而用户眼前什么都没有——关掉窗口就等于程序失踪，还退不掉。
+        # Whether the tray is genuinely usable: created **and** carrying a
+        # non-null icon. self.tray alone is not enough -- with a failed icon
+        # load it is still not None while the user sees nothing, and closing
+        # the window would hide the app with no way back and no way out.
+        self._tray_usable = False
+
         self._setup_tray()
 
 
@@ -360,12 +376,35 @@ class MainWindow(QMainWindow):
 
         if not QSystemTrayIcon.isSystemTrayAvailable():
 
+            print(
+                "托盘不可用，关闭窗口将直接退出"
+            )
+
             return
 
 
+        # 图标是托盘的全部可见内容；空图标等于没有托盘。
+        # The icon is the tray entry's entire visible presence; a null icon
+        # means no usable tray.
+
         icon = QIcon(
-            resource_path("assets/echo.ico")
+
+            resource_path(
+                "assets/echo.ico"
+            )
+
         )
+
+        if icon.isNull():
+
+            print(
+                "托盘图标加载失败"
+                "（assets/echo.ico 没找到），"
+                "关闭窗口将直接退出"
+            )
+
+            return
+
 
         self.setWindowIcon(icon)
 
@@ -386,6 +425,9 @@ class MainWindow(QMainWindow):
         self.tray.activated.connect(
             self._on_tray_activated
         )
+
+
+        self._tray_usable = True
 
 
     def _rebuild_tray_menu(self):
@@ -663,14 +705,19 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
 
-        # 有关闭按钮时最小化到托盘，
-        # 真正退出走托盘菜单
+        # 关闭按钮最小化到托盘，真正退出走托盘菜单。
+        # 但只在托盘**真的能用**时才藏：图标没加载出来、或被系统折叠得
+        # 用户找不到时，藏起来等于程序失踪——那时老实退出，别把它变成
+        # 一个只能靠任务管理器杀掉的幽灵进程。
+        # The close button hides to the tray; real exit goes through the tray
+        # menu. But only hide when the tray is genuinely usable: with a failed
+        # icon the user cannot find it, and hiding would turn the app into a
+        # ghost that only Task Manager can kill. In that case quit honestly.
 
         if (
-
-            self.tray is not None
+            self._tray_usable
+            and self.tray is not None
             and not self._really_quit
-
         ):
 
             event.ignore()
@@ -686,7 +733,9 @@ class MainWindow(QMainWindow):
                     "Soulmate",
 
                     tr("我没有离开，"
-                    "双击托盘图标就能找到我"),
+                    "双击托盘图标就能找到我。"
+                    "Windows 11 上图标可能被折叠"
+                    "在隐藏区，点任务栏的 ^ 就能看到"),
 
                     QSystemTrayIcon.Information,
 
@@ -705,7 +754,7 @@ class MainWindow(QMainWindow):
 
     def _notify_proactive(self, message):
 
-        if self.tray is None:
+        if not self._tray_usable:
 
             return
 
