@@ -5,12 +5,14 @@
 
 [下载 Download](#快速开始) · [English quick start](#english-quick-start)
 
-她不是"你问它答"的聊天机器人，而是具备三样关键能力：
+她不是"你问它答"的聊天机器人，而是具备四样关键能力：
 
 - **长期记忆 / Long-term memory**：她记得你说过的话、你的喜好、你们之间的约定。每次对话前自动检索相关记忆注入上下文，对话后自动归档新内容——每一次对话都建立在过去之上。
   She remembers what you said, what you like, what you two agreed on. Relevant memories are retrieved into context before each turn, new ones archived after — every conversation builds on the last.
 - **主动发消息 / Proactive messaging**：她会在合适的时间主动找你。背后不是定时器，是一个一千多行的"守门人"——判断时机、避免打扰、做意象去重、记得自己主动说过什么，下次你回话时她自然找补。
   She reaches out at the right moment. Behind it is not a timer but a thousand-line gatekeeper: timing, avoiding interruption, imagery de-duplication, tracking what she already said so she can pick the thread back up.
+- **记得日子 / Remembering dates**：你说过"下周三有个面试"，到点她会问起——快到点问准备，刚过问结果，过期就不提了（把三天前的事当刚发生来问，比不问更假）。你的生日、你们认识的那天、认识满 100 / 365 / 1000 天，她都记着；一年就一回的日子不会错过。
+  Mention "I have an interview next Wednesday" and she asks about it when the time comes — prep beforehand, outcome after, and she lets it go once it's stale. Your birthday, the day you two met, day 100 — days that come once a year are never missed.
 - **有分寸的心情 / Mood with boundaries**：她今天可能想聊，也可能不太想；敷衍一句她也不算数。一个不会说"今天不太想聊"的不是人，是服务。
   Some days she wants to talk, some days she doesn't, and a half-hearted reply doesn't count. Something that can never say "not today" isn't a person, it's a service.
 
@@ -43,6 +45,8 @@
 
 - **记忆系统**：本地 faiss 向量检索 + 摘要管线，宽进严出——闲聊不丢，噪声不进；关系、人格状态随对话演进
   **Memory**: local faiss vector search plus a summarisation pipeline. Wide intake, strict output — small talk is kept, noise is not. Relationship and personality state evolve with the conversation.
+- **事件回访**：他提过的事到点她会问起——快到点问准备（"明天那个面试，紧张吗"），刚过问结果，过期超过三天就不提了；生日、你们认识的日子、认识满 100 / 365 / 1000 天，她都记得
+  **Event follow-up**: things he mentioned get asked about when their time comes — prep before ("nervous about tomorrow?"), outcome after, dropped once three days have passed. His birthday, the day you two met, day 100 / 365 / 1000 — all remembered.
 - **主动消息守门人**：沉默时长、话题余额、意象去重、话茬跟踪，每天有上限，凭什么开口要过审
   **Proactive gatekeeper**: silence length, topic budget, imagery de-duplication, follow-up tracking, a daily cap — she has to justify speaking up.
 - **真实感细节**：流式输出、微信式分条气泡、"打了一半删掉重打"、按小时稳定的日常安排
@@ -171,6 +175,8 @@ run_cli.bat             CLI 启动器（Windows 双击）
 core/
   brain.py              大脑：把十几个子系统拼成一次对话
   proactive_guard.py    主动消息守门人
+  scheduler.py          主动消息的时机：话茬时间窗、特别日子、每天上限
+  special_days.py       生日解析、纪念日与里程碑推算、一天一次节流
   perception.py         理解端：情绪/场景/指代消解
   personality.py        人格
   self_facts.py         她的事实档案（persona.yaml 优先）
@@ -182,6 +188,7 @@ llm/api.py              多服务商接入、重试、降级
 prompt/builder.py       提示词拼装
 ui/                     桌面界面
 config/persona.yaml     人设配置
+tests/                  单元测试（不联网、不调模型、不碰真实数据）
 .claude/skills/         Claude Code Skill
 ```
 
@@ -202,9 +209,9 @@ config/persona.yaml     人设配置
 
 ## 自己打包 / Building from source
 
-exe 不进仓库（386MB 的二进制会永久撑大 git 历史），分发走 Releases 附件。打包步骤、发布流程和常见问题见 [RELEASE.md](RELEASE.md)。
+exe 不进仓库（350MB 的二进制会永久撑大 git 历史），分发走 Releases 附件。打包步骤、发布流程和常见问题见 [RELEASE.md](RELEASE.md)。
 
-The exe never enters the repo — a 386MB binary would bloat git history forever; distribution goes through release attachments. See [RELEASE.md](RELEASE.md) for the build steps, release flow and troubleshooting.
+The exe never enters the repo — a 350MB binary would bloat git history forever; distribution goes through release attachments. See [RELEASE.md](RELEASE.md) for the build steps, release flow and troubleshooting.
 
 ## Roadmap
 
@@ -218,7 +225,21 @@ The exe never enters the repo — a 386MB binary would bloat git history forever
 
 Issue 和 PR 都欢迎。改代码前先跑一遍现有流程（**桌面版 + `companion.py` 两个入口都过一遍**），界面文案记得过 `ui/i18n.py` 的双语表。
 
+跑测试：
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+写测试的规矩（`tests/` 现在只有 `test_special_days.py`，新增的按这套来）：
+
+- **不联网、不调模型**，否则跑不起来也没人愿意跑
+- **绝不碰真实的 `SoulmateData`**：把 `data_dir()` 指到临时目录
+- 时区和"今天"相关的逻辑，用固定的日期做输入，别依赖运行时的时间
+
 Issues and PRs are welcome. Before changing code, run both entry points (**desktop + `companion.py`**), and route any new UI string through the bilingual table in `ui/i18n.py`.
+
+Run the tests with `python -m unittest discover -s tests -v`. New tests follow the same rules the existing ones do: no network, no model calls, and never the real `SoulmateData` — point `data_dir()` at a throwaway directory instead.
 
 ## License
 

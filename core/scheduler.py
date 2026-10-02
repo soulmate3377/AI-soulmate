@@ -2,6 +2,8 @@ from datetime import datetime
 
 from core import storage
 
+from core import special_days
+
 from core.intention import IntentionSystem
 
 from core.interruption import InterruptionControl
@@ -108,6 +110,83 @@ class Scheduler:
             return None
 
 
+    # ==================================================
+    # 话茬的新旧窗口,拆成纯函数:
+    #   - 那件事有明确时间（due）：
+    #     过去 24 小时内 = 刚到点，最该问；
+    #     还差 24 小时内 = 快到点，可以问准备；
+    #     过去超过三天 = 过期，再问就假了
+    #   - 没有时间：退回按提及时间 1~48 小时
+    # ==================================================
+
+    @staticmethod
+    def _window_flags(
+        mentioned, due, now
+    ):
+
+        """
+        返回 (留不留, 刚到点, 快到点)。
+        """
+
+        age_hours = (
+
+            now - mentioned
+
+        ).total_seconds() / 3600
+
+
+        # 刚说完就问像复读，
+        # 有没有事件时间都一样
+
+        if age_hours < 1:
+
+            return False, False, False
+
+
+        if due is not None:
+
+            offset_hours = (
+
+                now - due
+
+            ).total_seconds() / 3600
+
+
+            # 事已经过去三天以上，
+            # 再问就假了
+
+            if offset_hours > 72:
+
+                return False, False, False
+
+
+            # 事刚过（24小时内）：
+            # 这是最该问的时刻
+
+            if 0 <= offset_hours <= 24:
+
+                return True, True, False
+
+
+            # 事还差一天内就到：
+            # 问准备、带点期待
+
+            if -24 <= offset_hours < 0:
+
+                return True, False, True
+
+            return True, False, False
+
+
+        # 没有事件时间：
+        # 太旧的过时
+
+        if age_hours <= 48:
+
+            return True, False, False
+
+        return False, False, False
+
     def _load_follow_ups(self):
 
         items = storage.read_json(
@@ -140,58 +219,27 @@ class Scheduler:
 
                 continue
 
-            age_hours = (
+            keep, due_hit, due_soon = (
+                self._window_flags(
+                    t,
+                    self._due_of(item),
+                    now
+                )
+            )
 
-                now - t
-
-            ).total_seconds() / 3600
-
-
-            # 刚说完就问像复读，
-            # 有没有事件时间都一样
-
-            if age_hours < 1:
+            if not keep:
 
                 continue
 
+            if due_hit:
 
-            due = self._due_of(item)
+                item["_due_hit"] = True
 
-            if due is not None:
+            if due_soon:
 
-                # 事已经过去三天以上，
-                # 再问就假了
+                item["_due_soon"] = True
 
-                overdue_hours = (
-
-                    now - due
-
-                ).total_seconds() / 3600
-
-                if overdue_hours > 72:
-
-                    continue
-
-                # 事刚过（24小时内）：
-                # 这是最该问的时刻，
-                # 打个标记让意图提优先级
-
-                if 0 <= overdue_hours <= 24:
-
-                    item["_due_hit"] = True
-
-                fresh.append(item)
-
-                continue
-
-
-            # 没有事件时间：
-            # 太旧的过时
-
-            if age_hours <= 48:
-
-                fresh.append(item)
-
+            fresh.append(item)
 
         return fresh[-3:]
 
@@ -278,6 +326,77 @@ class Scheduler:
             self._followups_file(), items
 
         )
+
+
+    # ==================================================
+    # 特别的日子：生日、认识纪念日、
+    # 认识满 N 天。状态和命中判断
+    # 都在 core/special_days.py，
+    # 这里只负责取今天的命中。
+    # ==================================================
+
+    def _load_events(self):
+
+        """
+        先 sync：档案里的生日、第一次
+        聊天的日期，对齐进 events.json；
+        再取今天命中的日子。
+        一天最多提一次由 last_asked 节流。
+        """
+
+        try:
+
+            special_days.sync()
+
+        except Exception:
+
+            pass
+
+        try:
+
+            return (
+                special_days.due_today()
+            )
+
+        except Exception:
+
+            return []
+
+    @staticmethod
+    def _events_used(
+        message, events
+    ):
+
+        """
+        生成的那句话实际提到了哪些日子。
+
+        判定和 used_follow_ups 一样：
+        日子说法里任意一个 2 字切片
+        出现在消息里就算提到。
+        """
+
+        if not message or not events:
+
+            return []
+
+        used = []
+
+        for item in events:
+
+            pieces = _terms(
+                item.get("text") or "", 2
+            )
+
+            if pieces and any(
+                p in message
+                for p in pieces
+            ):
+
+                used.append(
+                    item.get("id")
+                )
+
+        return used
 
 
 
@@ -403,20 +522,76 @@ class Scheduler:
 
             )
 
+            due_soon = any(
+
+                i.get("_due_soon")
+                for i in follow_ups
+
+            )
+
+            if due_hit:
+
+                reason = (
+                    "他提的那件事刚到点"
+                )
+
+                priority = 0.95
+
+            elif due_soon:
+
+                reason = (
+                    "他提的那件事快到点了"
+                )
+
+                priority = 0.93
+
+            else:
+
+                reason = (
+                    "对方之前提过近期安排"
+                )
+
+                priority = 0.9
+
             intentions.append({
 
                 "type": "follow_up",
 
-                "reason": (
+                "reason": reason,
 
-                    "他提的那件事刚到点"
-                    if due_hit
-                    else "对方之前提过近期安排"
-                ),
+                "priority": priority,
 
-                "priority": (
-                    0.95 if due_hit else 0.9
-                ),
+            })
+
+
+        # =========================
+        # 特别的日子：生日、
+        # 认识纪念日、认识满 N 天。
+        # 一年就一回，错过不再来，
+        # 所以排在所有意图前面——
+        # 但只比"话茬刚到点"高一点：
+        # 他面试完的那天先问面试，
+        # 生日晚一句说也不迟。
+        # 守门人的每一道闸
+        # （深夜、每日上限、心情）
+        # 对它照常生效，不开后门。
+        # =========================
+
+        events = self._load_events()
+
+        if events:
+
+            intentions.append({
+
+                "type": "special_day",
+
+                "reason":
+                    "；".join(
+                        i.get("text") or ""
+                        for i in events
+                    ),
+
+                "priority": 0.96,
 
             })
 
@@ -530,6 +705,8 @@ class Scheduler:
 
             follow_ups=follow_ups,
 
+            events=events,
+
             avoid_imagery=avoid_imagery
 
         )
@@ -542,6 +719,35 @@ class Scheduler:
             message
 
         )
+
+
+        # 特别的日子：生成的那句话里
+        # 真的提到了（和话茬用同一把
+        # 2 字切片的尺）才记"说过"，
+        # 一天最多说一次。
+        # 在生成后就标记，而不是等
+        # 守门人放行——万一条消息
+        # 被守门人丢掉，今天宁可
+        # 少说一次，也不冒改天
+        # 再说一遍的风险。
+        # 三个入口（GUI/CLI/Web）都走
+        # 这里，行为保持一致。
+
+        try:
+
+            used_ids = (
+                self._events_used(
+                    message, events
+                )
+            )
+
+            special_days.mark_asked(
+                used_ids
+            )
+
+        except Exception:
+
+            pass
 
 
         # 话茬跟着消息一起交出去。

@@ -149,6 +149,34 @@ class ProactiveConversation:
         return line
 
 
+    # Special days: one quiet line, the way a friend happens to mention it
+    # 特别的日子：一行轻描淡写，像朋友顺口提一嘴
+
+    @staticmethod
+    def _event_line(item):
+
+        text = item.get("text") or ""
+
+        if not text:
+
+            return ""
+
+
+        # Only the birthday carries its date: for anniversaries and
+        # milestones the text itself already says what today is
+        # 只有生日带日期：纪念日和满 N 天的说法里已经写着今天是什么日子
+
+        if item.get("kind") == "birthday":
+
+            date = item.get("date") or ""
+
+            return (
+                f"- {text}（{date}，就是今天）"
+            )
+
+        return f"- {text}"
+
+
     def generate(
 
         self,
@@ -166,6 +194,11 @@ class ProactiveConversation:
         recent_dialogue=None,
 
         follow_ups=None,
+
+        # Days that matter because of who he is: birthday, the day you two met
+        # 特别的日子：生日、你们认识的日子
+
+        events=None,
 
         # Imagery she already used within 24h — this line must not reuse it
         # 24 小时内她已经用过的意象，这一句不许再碰
@@ -329,6 +362,21 @@ class ProactiveConversation:
             )
 
 
+        # Special days: birthday, anniversaries -- like a friend who
+        # happened to remember, never a calendar notification
+        # 特别的日子：生日、纪念日——像朋友恰好记得，绝不像日历通知
+
+        events_text = ""
+
+        if events:
+
+            events_text = "\n".join(
+                self._event_line(i)
+                for i in events
+                if i.get("text")
+            )
+
+
         # Build the proactive-chat prompt
         # 构建主动聊天 Prompt
 
@@ -385,6 +433,10 @@ class ProactiveConversation:
 对方之前提过的事（话茬）：
 
 {followup_text}
+
+今天特别的日子：
+
+{events_text}
 {avoid_text}
 
 
@@ -422,10 +474,22 @@ class ProactiveConversation:
      只问那件事本身
      （"你那个面试后来怎么样了"）
 
+   - 话茬里标着"快到点"的事还没到：
+     可以问准备、带点期待
+     （"明天那个面试，紧张吗"），
+     不许当成已经过去的事问
+
 7c. 过期的话茬宁可不提。
     为了显得关心，
     把三天前的事当成刚发生的事来问，
     比不问更假。
+
+7d. 如果上面有"今天特别的日子"：
+    一句自然的祝福或提起就够了，
+    像朋友顺口想起，不许铺成小作文，
+    这一句最多提一个日子。
+    上面没有时，绝不许编造
+    今天是什么日子。
 
 8. 没有话茬时，再看最近聊天里
    有没有没收住的话题可以接
