@@ -404,6 +404,17 @@ class MainWindow(QMainWindow):
             f"icon_path={icon_path!r} icon_exists={icon_exists}"
         )
 
+        # 底层再查一遍，好和 Qt 的判断对照。
+        # "Qt 说不可用"和"系统里根本没有通知区域"是两回事：
+        # 前者可能是安全软件拦的，后者是 Shell 没跑。
+        # Probe the layer underneath so it can be compared against Qt's
+        # answer. "Qt says unavailable" and "there is no notification area at
+        # all" are different problems: the first may be security software, the
+        # second means the shell is not running.
+        self._log_tray(
+            "system: " + self._tray_system_probe()
+        )
+
         if not available:
 
             self._log_tray(
@@ -467,6 +478,43 @@ class MainWindow(QMainWindow):
             "tray created and show() called; "
             f"visible={self.tray.isVisible()}"
         )
+
+
+    @staticmethod
+    def _tray_system_probe():
+
+        """
+        直接问 Windows：通知区域那两个窗口在不在。
+
+        Ask Windows whether the notification-area windows exist.
+
+        写日志用。查不到就返回说明文字，绝不抛异常。
+        For the log only. Returns a description; never raises.
+        """
+
+        try:
+
+            import ctypes
+
+            user32 = ctypes.windll.user32
+
+            parts = []
+
+            for cls in (
+                "Shell_TrayWnd",
+                "Shell_SecondaryTrayWnd",
+                "NotifyIconOverflowWindow",
+            ):
+
+                hwnd = user32.FindWindowW(class_name=cls, window_name=None)
+
+                parts.append(f"{cls}={hwnd or 'absent'}")
+
+            return " ".join(parts)
+
+        except Exception as exc:
+
+            return f"(probe failed: {type(exc).__name__})"
 
 
     @staticmethod
