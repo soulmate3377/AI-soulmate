@@ -374,7 +374,41 @@ class MainWindow(QMainWindow):
 
     def _setup_tray(self):
 
-        if not QSystemTrayIcon.isSystemTrayAvailable():
+        # 托盘相关的诊断都写进 echo_error.log：
+        # 打包后没有控制台，print() 用户看不到，托盘又不显示的话
+        # 根本无从判断是哪一步挂了。
+        # Tray diagnostics go to echo_error.log: the packaged app has no
+        # console, so a print() is invisible, and with no tray icon there is
+        # otherwise no way to tell which step failed.
+
+        available = QSystemTrayIcon.isSystemTrayAvailable()
+
+        icon_rel = "assets/echo.ico"
+
+        icon_path = resource_path(icon_rel)
+
+        icon_exists = False
+
+        try:
+
+            from pathlib import Path as _P
+
+            icon_exists = _P(icon_path).exists()
+
+        except Exception:
+
+            pass
+
+        self._log_tray(
+            f"setup: isSystemTrayAvailable={available} "
+            f"icon_path={icon_path!r} icon_exists={icon_exists}"
+        )
+
+        if not available:
+
+            self._log_tray(
+                "托盘不可用，关闭窗口将直接退出"
+            )
 
             print(
                 "托盘不可用，关闭窗口将直接退出"
@@ -387,15 +421,15 @@ class MainWindow(QMainWindow):
         # The icon is the tray entry's entire visible presence; a null icon
         # means no usable tray.
 
-        icon = QIcon(
-
-            resource_path(
-                "assets/echo.ico"
-            )
-
-        )
+        icon = QIcon(icon_path)
 
         if icon.isNull():
+
+            self._log_tray(
+                "托盘图标加载失败"
+                "（assets/echo.ico 没找到），"
+                "关闭窗口将直接退出"
+            )
 
             print(
                 "托盘图标加载失败"
@@ -428,6 +462,33 @@ class MainWindow(QMainWindow):
 
 
         self._tray_usable = True
+
+        self._log_tray(
+            "tray created and show() called; "
+            f"visible={self.tray.isVisible()}"
+        )
+
+
+    @staticmethod
+    def _log_tray(message):
+
+        """
+        托盘诊断写日志，失败也不能影响启动。
+        永远不抛异常。
+
+        Tray diagnostics go to the log; a failure here must never disturb
+        startup.
+        """
+
+        try:
+
+            from core.observe import log_line
+
+            log_line(f"tray: {message}")
+
+        except Exception:
+
+            pass
 
 
     def _rebuild_tray_menu(self):

@@ -187,6 +187,43 @@ def _enabled_raw():
     return raw not in _OFF_VALUES
 
 
+def log_line(message):
+    """
+    Append one line to echo_error.log, for diagnosing startup problems.
+
+    往 echo_error.log 追加一行，用于排查启动期问题。
+
+    Why this exists / 为什么要有它
+    ----------------------------
+    The packaged app runs with console=False, so a print() goes nowhere.
+    When something fails before the window appears (a missing asset, an
+    unavailable tray), the user sees nothing at all and the failure is
+    invisible. This writes to the same log file core.storage and the rest
+    of the app already use, so it can be read after the fact.
+
+    打包后的程序是 console=False，print() 无处可去。窗口出现之前出的问题
+    （资源缺失、托盘不可用）用户完全看不到，故障就是隐形的。这里写到应用
+    其他地方已经在用的同一个日志文件，事后能查。
+
+    Never raises -- diagnostics must not become the problem.
+    永不抛异常——诊断手段不能自己变成故障。
+    """
+
+    try:
+
+        path = Path(data_dir()) / "echo_error.log"
+
+        stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        with open(path, "a", encoding="utf-8") as f:
+
+            f.write(f"[{stamp}] {message}\n")
+
+    except Exception:
+
+        return
+
+
 # =========================
 # 读取
 # =========================

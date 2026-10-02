@@ -351,7 +351,7 @@ def resource_path(rel):
         )
 
 
-    candidates.append(Path(rel))
+    candidates.append(Path.cwd() / rel)
 
 
     # 源码运行：相对路径是相对项目根，不是相对当前目录
