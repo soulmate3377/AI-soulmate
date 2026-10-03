@@ -479,42 +479,118 @@ class MainWindow(QMainWindow):
             f"visible={self.tray.isVisible()}"
         )
 
+        # 第一次运行时主动说一句她住在托盘里。
+        # Windows 11 默认把新托盘图标折叠进隐藏区，用户看不到，
+        # 于是"关掉窗口"之后会觉得程序消失了。与其等他踩，不如先说。
+        # Say once, on first run, that she lives in the tray. Windows 11
+        # tucks new tray icons into the hidden area by default, so after
+        # closing the window the app looks like it vanished. Better to say so
+        # than to let the user find out the hard way.
+        QTimer.singleShot(2500, self._announce_tray)
+
 
     @staticmethod
     def _tray_system_probe():
 
         """
-        直接问 Windows：通知区域那两个窗口在不在。
+        记录几个和托盘有关的事实，供排查用。
 
-        Ask Windows whether the notification-area windows exist.
+        Record a few tray-related facts, for troubleshooting.
+
+        注意：这里**不**用 FindWindowW 去找 Shell_TrayWnd。那个调用在
+        Python 里会把 "Shell_TrayWnd"（str）按 ANSI 传进去，64 位系统上
+        查不到对方的窗口，结果永远是 absent —— 我们已经实测到一次假阴性
+        （Qt 说托盘可用，探测却说窗口不存在）。宁可少报，不报错的。
+
+        Note: this deliberately does NOT use FindWindowW to look for
+        Shell_TrayWnd. Python hands FindWindowW a str, which ctypes converts
+        as ANSI, so on 64-bit Windows the lookup misses cross-process windows
+        and always reports "absent". We already produced one false negative
+        that way (Qt said the tray was fine, the probe said the window did not
+        exist). Better to report less than to report something wrong.
 
         写日志用。查不到就返回说明文字，绝不抛异常。
-        For the log only. Returns a description; never raises.
+        For the log only; never raises.
         """
 
         try:
 
             import ctypes
+            import platform
 
             user32 = ctypes.windll.user32
 
-            parts = []
+            screen_w = user32.GetSystemMetrics(0)
+            screen_h = user32.GetSystemMetrics(1)
 
-            for cls in (
-                "Shell_TrayWnd",
-                "Shell_SecondaryTrayWnd",
-                "NotifyIconOverflowWindow",
-            ):
-
-                hwnd = user32.FindWindowW(class_name=cls, window_name=None)
-
-                parts.append(f"{cls}={hwnd or 'absent'}")
-
-            return " ".join(parts)
+            return (
+                f"exe={platform.architecture()[0]} "
+                f"screen={screen_w}x{screen_h} "
+                f"foreground={user32.GetForegroundWindow()}"
+            )
 
         except Exception as exc:
 
             return f"(probe failed: {type(exc).__name__})"
+
+
+    def _announce_tray(self):
+
+        """
+        首次启动时提示：她住在托盘里，以及怎么找到那个图标。
+
+        On first launch, say that she lives in the tray and how to find the
+        icon there.
+
+        只提示一次，记在 config.json 的 tray_announced 字段里。
+        托盘真的不可用时什么都不做。
+        Runs once; the flag lives in config.json as tray_announced. Does
+        nothing when the tray is unusable.
+        """
+
+        if not self._tray_usable:
+
+            return
+
+        try:
+
+            from core.storage import (
+                load_config,
+                save_config,
+            )
+
+            cfg = load_config()
+
+            if cfg.get("tray_announced"):
+
+                return
+
+            self.tray.showMessage(
+
+                "Soulmate",
+
+                tr("我在托盘里。"
+                "Windows 11 可能把图标折叠着——"
+                "点任务栏的 ^ 箭头，"
+                "或者到「设置 → 个性化 → 任务栏 → "
+                "其他系统托盘图标」里把我打开。"
+                "关掉窗口我就在这里，右键可以退出。"),
+
+                QSystemTrayIcon.Information,
+
+                9000
+
+            )
+
+            cfg["tray_announced"] = True
+
+            save_config(cfg)
+
+        except Exception:
+
+            # 提示失败不能影响启动
+            # A failed announcement must not disturb startup.
+            pass
 
 
     @staticmethod

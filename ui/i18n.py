@@ -205,6 +205,16 @@ EN_MAP = {
         "I'm still here — double-click the tray icon to find me. "
         "On Windows 11 it may be tucked into the hidden area; "
         "click the ^ arrow on the taskbar to reach it",
+    "我在托盘里。"
+    "Windows 11 可能把图标折叠着——"
+    "点任务栏的 ^ 箭头，"
+    "或者到「设置 → 个性化 → 任务栏 → "
+    "其他系统托盘图标」里把我打开。"
+    "关掉窗口我就在这里，右键可以退出。":
+        "I live in the tray. Windows 11 may have folded the icon away — "
+        "click the ^ arrow on the taskbar, or open Settings → "
+        "Personalization → Taskbar → Other system tray icons and turn me on. "
+        "Close the window and I stay here; right-click to quit.",
     "打开": "Open",
     "退出": "Quit",
 
